@@ -1,4 +1,4 @@
-CREATE TABLE  IF NOT EXISTS `alive_dev` (
+CREATE TABLE  IF NOT EXISTS `alive` (
  `alive_ip` int(10) unsigned NOT NULL,
  `alive_is` tinyint(1) NOT NULL,
  `alive_ts` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

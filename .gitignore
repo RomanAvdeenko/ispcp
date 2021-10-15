@@ -24,7 +24,7 @@ alive
 .*
 
 # Migrations
-migrations/
+#migrations/
 
 #
 
