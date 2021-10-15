@@ -23,3 +23,9 @@ alive
 # Hiden
 .*
 
+# Migrations
+migrations/
+
+#
+
+
