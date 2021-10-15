@@ -1,0 +1,1 @@
+DROP TABLE `alive_dev`;
