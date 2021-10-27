@@ -1,0 +1,4 @@
+exclude-ifaces:
+ - lo
+ - bond*
+ - eth0
