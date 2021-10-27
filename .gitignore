@@ -1,8 +1,3 @@
-# Git specific
-!.gitignore
-!.github/
-
-
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -17,6 +12,7 @@
 *.out
 alive
 
+
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
@@ -26,6 +22,6 @@ alive
 # Migrations
 #migrations/
 
-#
-
-
+# Git specific
+!.gitignore
+!.github/
