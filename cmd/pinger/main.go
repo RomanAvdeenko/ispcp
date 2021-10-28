@@ -12,16 +12,16 @@ import (
 
 var (
 	configFileName *string
-	config         *pinger.Config
 )
 
 func init() {
+	// Handle flags
 	configFileName = flag.String("c", "./configs/config.yaml", "path to config file")
 	flag.Parse()
 }
 
 //Read and parse config file
-func readConfig(config *pinger.Config) error {
+func readConfig(cfg *pinger.Config) error {
 	configFileName, err := filepath.Abs(*configFileName)
 	if err != nil {
 		return err
@@ -35,20 +35,25 @@ func readConfig(config *pinger.Config) error {
 
 	defer configFile.Close()
 
-	err = cleanenv.ReadConfig(configFileName, config)
+	err = cleanenv.ReadConfig(configFileName, cfg)
 	if err != nil {
 		return err
 	}
+	cfg.Correct()
 
 	return nil
 }
 
 func main() {
-	config = pinger.NewConfig()
+	config := pinger.NewConfig()
 
 	if err := readConfig(config); err != nil {
 		log.Fatalln(err)
 	}
 
-	log.Printf("%+v\n", *config)
+	if err := pinger.Start(config); err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Printf("config: %+v\n", config)
 }

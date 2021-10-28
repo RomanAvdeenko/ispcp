@@ -1,17 +1,49 @@
 package pinger
 
 import (
-	"fmt"
+	"ispcp/internal/host"
 	"ispcp/internal/model"
+	"log"
 	"net"
+	"os"
 
-	mynet "github.com/RomanAvdeenko/utils/net"
 	"github.com/j-keck/arping"
 )
 
-const concurrentMax = 4
+type PingerServer struct {
+	conifg *Config
+	logger *log.Logger
+	host   *host.Host
+}
 
-func ping(pingChan <-chan string, pongChan chan<- model.Pong, ifaceName string) {
+func newServer(cfg *Config) *PingerServer {
+	s := PingerServer{
+		conifg: cfg,
+		logger: log.New(os.Stdout, "", log.Lshortfile),
+		host:   host.NewHost(),
+	}
+	s.configure()
+	return &s
+}
+
+func Start(cfg *Config) error {
+	s := newServer(cfg)
+	//
+	return s.start()
+}
+
+func (s *PingerServer) configure() error {
+	//
+	s.host.SetExcludeInterfaceNames(s.conifg.ExcludeIfaceNames)
+	s.host.Configure()
+	return nil
+}
+func (s *PingerServer) start() error {
+	s.logger.Println("Start pinger...")
+	return nil
+}
+
+func (s *PingerServer) ping(pingChan <-chan string, pongChan chan<- model.Pong, ifaceName string) {
 	for ip := range pingChan {
 		ipAddr := net.ParseIP(ip)
 		macAddr, duration, err := arping.PingOverIfaceByName(ipAddr, ifaceName)
@@ -40,33 +72,34 @@ func receivePong(pongNum int, pongChan <-chan model.Pong, doneChan chan<- []mode
 }
 
 func main1() {
-	//arping.EnableVerboseLog()
-	hosts, _ := mynet.GetHosts("46.162.42.0/24")
+	/*	//arping.EnableVerboseLog()
+		hosts, _ := mynet.GetHosts("192.168.1.1/24")
 
-	pingChan := make(chan string, concurrentMax)
-	pongChan := make(chan model.Pong, len(hosts))
-	doneChan := make(chan []model.Pong)
+		pingChan := make(chan string, 4)
+		pongChan := make(chan model.Pong, len(hosts))
+		doneChan := make(chan []model.Pong)
 
-	// Start workers
-	for i := 0; i < concurrentMax; i++ {
-		go ping(pingChan, pongChan, "eth3.72")
-	}
-
-	// Set job
-	go func() {
-		for _, ip := range hosts {
-			pingChan <- ip
-			//fmt.Println("sent: " + ip)
+		// Start workers
+		for i := 0; i < s.ThreadsNumber; i++ {
+			go ping(pingChan, pongChan, "wlo1")
 		}
-		close(pingChan)
-	}()
 
-	// Start Receiver
-	go receivePong(len(hosts), pongChan, doneChan)
+		// Set job
+		go func() {
+			for _, ip := range hosts {
+				pingChan <- ip
+				//fmt.Println("sent: " + ip)
+			}
+			close(pingChan)
+		}()
 
-	// Get results
-	alives := <-doneChan
-	for _, alive := range alives {
-		fmt.Println(alive)
-	}
+		// Start Receiver
+		go receivePong(len(hosts), pongChan, doneChan)
+
+		// Get results
+		alives := <-doneChan
+		for _, alive := range alives {
+			fmt.Println(alive)
+		}
+	*/
 }

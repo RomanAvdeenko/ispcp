@@ -1,4 +1,5 @@
 exclude-ifaces:
- - lo
- - bond*
- - eth0
+  - lo
+  - bond
+test-network: 192.168.1.1/24
+threads: 4
