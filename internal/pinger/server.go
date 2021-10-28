@@ -40,6 +40,8 @@ func (s *PingerServer) configure() error {
 }
 func (s *PingerServer) start() error {
 	s.logger.Println("Start pinger...")
+	//
+	s.logger.Println("Stop pinger...")
 	return nil
 }
 

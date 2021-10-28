@@ -55,5 +55,5 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	log.Printf("config: %+v\n", config)
+	//log.Printf("config: %+v\n", config)
 }

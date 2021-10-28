@@ -29,7 +29,7 @@ func (h *Host) Configure() {
 	// Filter
 	filteredIfaces := []net.Interface{}
 	for _, iface := range ifaces {
-		log.Printf("%v: %v\n", iface.Name, iface.Flags)
+		//log.Printf("%v: %v\n", iface.Name, iface.Flags)
 		// skip down interface & check next intf
 		if iface.Flags&net.FlagUp == 0 {
 			continue
@@ -53,7 +53,12 @@ func (h *Host) Configure() {
 		filteredIfaces = append(filteredIfaces, iface)
 	}
 	h.processedInterfaces = &filteredIfaces
-	log.Printf("h.processedInterfaces: %#v\n", h.processedInterfaces)
+	//
+	log.Println("ProcessedInterfaces:")
+	for _, val := range *h.processedInterfaces {
+		log.Println(val.Name)
+	}
+
 }
 
 //func (h * Host)
