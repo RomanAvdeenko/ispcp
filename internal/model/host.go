@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-// CheckHostRecord contains data about the host's network availability
-type CheckHostRecord struct {
-	IP    net.IP
-	MAC   net.HardwareAddr
-	Alive bool
-	Time  time.Time
+// Pong contains data about the host availability
+type Pong struct {
+	IpAddr   net.IP
+	MacAddr  net.HardwareAddr
+	Alive    bool
+	RespTime time.Duration
 }
