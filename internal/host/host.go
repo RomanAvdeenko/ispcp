@@ -25,21 +25,19 @@ func (h *Host) SetExcludeInterfaceNames(val []string) {
 	if val != nil {
 		h.excludeIfaceNames = val
 	}
-
 }
 
 func (h *Host) SetLogger(l *zerolog.Logger) { h.logger = l }
 
 func (h *Host) Configure() {
-	// set Logger
+	// Set default logger if needed
 	if h.logger == nil {
 		h.logger = &zerolog.Logger{}
 		*h.logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Stamp})
 	}
-	// get Interfaces exclude unprocessed
+	// Walk to interfaces
 	ifaces, _ := net.Interfaces()
-	// Filter
-	filteredIfaces := []net.Interface{}
+	processedInterfaces := []net.Interface{}
 	for _, iface := range ifaces {
 		// skip down interface & check next intf
 		if iface.Flags&net.FlagUp == 0 {
@@ -61,9 +59,9 @@ func (h *Host) Configure() {
 			continue
 		}
 		//
-		filteredIfaces = append(filteredIfaces, iface)
+		processedInterfaces = append(processedInterfaces, iface)
 	}
-	h.processedInterfaces = filteredIfaces
+	h.processedInterfaces = processedInterfaces
 	//
 	h.logger.Debug().Msg("ProcessedInterfaces:")
 	for _, val := range h.processedInterfaces {
