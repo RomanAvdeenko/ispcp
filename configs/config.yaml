@@ -1,5 +1,6 @@
 exclude-ifaces:
   - lo
   - bond
+  - wlo
 test-network: 192.168.1.1/24
 threads: 4

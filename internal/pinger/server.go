@@ -3,23 +3,27 @@ package pinger
 import (
 	"ispcp/internal/host"
 	"ispcp/internal/model"
-	"log"
-	"net"
 	"os"
+	"time"
+
+	"net"
 
 	"github.com/j-keck/arping"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type PingerServer struct {
 	conifg *Config
-	logger *log.Logger
+	logger *zerolog.Logger
 	host   *host.Host
 }
 
 func newServer(cfg *Config) *PingerServer {
 	s := PingerServer{
 		conifg: cfg,
-		logger: log.New(os.Stdout, "", log.Lshortfile),
+		//logger: zerolog.New(os.Stdout),
+		logger: &zerolog.Logger{},
 		host:   host.NewHost(),
 	}
 	s.configure()
@@ -33,16 +37,23 @@ func Start(cfg *Config) error {
 }
 
 func (s *PingerServer) configure() error {
-	//
+	s.configureLogger()
+
 	s.host.SetExcludeInterfaceNames(s.conifg.ExcludeIfaceNames)
+	s.host.SetLogger(s.logger)
 	s.host.Configure()
+
 	return nil
 }
+
 func (s *PingerServer) start() error {
-	s.logger.Println("Start pinger...")
-	//
-	s.logger.Println("Stop pinger...")
+	s.logger.Info().Msg("Start pinger...")
+	s.logger.Info().Msg("Stop pinger...")
 	return nil
+}
+
+func (s *PingerServer) configureLogger() {
+	*s.logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.StampMilli})
 }
 
 func (s *PingerServer) ping(pingChan <-chan string, pongChan chan<- model.Pong, ifaceName string) {
