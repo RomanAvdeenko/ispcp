@@ -4,8 +4,8 @@ const concurrentMax = 8
 
 type Config struct {
 	ExcludeIfaceNames []string `yaml:"exclude-ifaces"`
-	TestNetwork       string   `yaml:"test-network"`
 	ThreadsNumber     int      `yaml:"threads"`
+	ExcludeNetIPs     []string `yaml:"exclude-networks"`
 }
 
 func NewConfig() *Config {

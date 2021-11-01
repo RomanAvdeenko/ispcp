@@ -3,27 +3,34 @@ package host
 import (
 	"net"
 	"os"
-	"strings"
 	"time"
 
+	myslice "github.com/RomanAvdeenko/utils/slice"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 // Host implements unix host...
 type Host struct {
-	processedInterfaces []net.Interface
-	excludeIfaceNames   []string
-	logger              *zerolog.Logger
+	ProcessedIfaces   []net.Interface
+	excludeIfaceNames []string
+	excludeNetIPs     []string
+	logger            *zerolog.Logger
 }
 
 func NewHost() *Host {
 	return &Host{}
 }
 
-func (h *Host) SetExcludeInterfaceNames(val []string) {
+func (h *Host) SetExcludeIfaceNames(val []string) {
 	if val != nil {
 		h.excludeIfaceNames = val
+	}
+}
+
+func (h *Host) SetExcludeNetworkIPs(val []string) {
+	if val != nil {
+		h.excludeNetIPs = val
 	}
 }
 
@@ -48,24 +55,47 @@ func (h *Host) Configure() {
 			continue
 		}
 		// skip exclude interfaces from configuration
-		var needContinue bool
-		for _, excludeVal := range h.excludeIfaceNames {
-			if strings.HasPrefix(iface.Name, excludeVal) {
-				needContinue = true
-				break
-			}
-		}
-		if needContinue {
+		if myslice.IsMatchesValue(h.excludeIfaceNames, iface.Name) {
 			continue
 		}
-		//
 		processedInterfaces = append(processedInterfaces, iface)
 	}
-	h.processedInterfaces = processedInterfaces
-	//
-	h.logger.Debug().Msg("ProcessedInterfaces:")
-	for _, val := range h.processedInterfaces {
+	h.ProcessedIfaces = processedInterfaces
+	for _, val := range h.ProcessedIfaces {
 		h.logger.Debug().Msg(val.Name)
 	}
+}
 
+func (h *Host) GetIfaceAddresses(iface net.Interface) (ipNets []string, err error) {
+	var res []string
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return
+	}
+	for _, addr := range addrs {
+		ifaceIP, ok := addr.(*net.IPNet)
+		if !ok {
+			return
+		}
+		ip := ifaceIP.IP
+		if ip == nil || ip.IsLoopback() {
+			continue
+		}
+		// convert IP IPv4 address to 4-byte
+		ip = ip.To4()
+		if ip == nil {
+			continue // not an ipv4 address
+		}
+		_, ifaceIPNet, err := net.ParseCIDR(ifaceIP.String())
+		if err != nil {
+			continue
+		}
+		//h.logger.Debug().Msg(ifaceIPNet.String())
+		// skip exclude network IP addresses from configuration
+		if myslice.IsMatchesValue(h.excludeNetIPs, ifaceIPNet.String()) {
+			continue
+		}
+		res = append(res, ifaceIPNet.String())
+	}
+	return res, nil
 }

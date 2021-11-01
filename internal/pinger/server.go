@@ -1,6 +1,7 @@
 package pinger
 
 import (
+	"fmt"
 	"ispcp/internal/host"
 	"ispcp/internal/model"
 	"os"
@@ -39,7 +40,8 @@ func Start(cfg *Config) error {
 func (s *PingerServer) configure() error {
 	s.configureLogger()
 
-	s.host.SetExcludeInterfaceNames(s.conifg.ExcludeIfaceNames)
+	s.host.SetExcludeIfaceNames(s.conifg.ExcludeIfaceNames)
+	s.host.SetExcludeNetworkIPs(s.conifg.ExcludeNetIPs)
 	s.host.SetLogger(s.logger)
 	s.host.Configure()
 
@@ -48,6 +50,8 @@ func (s *PingerServer) configure() error {
 
 func (s *PingerServer) start() error {
 	s.logger.Info().Msg("Start pinger...")
+	ips, _ := s.host.GetIfaceAddresses(s.host.ProcessedIfaces[0])
+	fmt.Println(ips)
 	s.logger.Info().Msg("Stop pinger...")
 	return nil
 }

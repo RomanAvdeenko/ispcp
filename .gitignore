@@ -9,17 +9,20 @@
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
-*.out
-alive
-
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
 # Hiden
 .*
+
+#Binary
 main
 pinger
+*.out
+
+# go mod sum file
+go.sum
 
 # Migrations
 #migrations/
