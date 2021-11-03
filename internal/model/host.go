@@ -31,7 +31,7 @@ func NewPongs() *Pongs {
 	return &Pongs{pong: make([]Pong, 0, 32)}
 }
 
-func (p *Pongs) Store(key uint32, val *Pong) {
+func (p *Pongs) Store(val *Pong) {
 	p.Lock()
 	defer p.Unlock()
 

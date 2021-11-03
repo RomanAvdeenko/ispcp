@@ -121,17 +121,18 @@ func (s *Server) startWorkers() {
 		// Start workers
 		go func(pingChan <-chan model.Ping, num int) {
 			for ping := range pingChan {
-				ip := ping.IP
-				iface := ping.Iface
 
-				macAddr, duration, err := arping.PingOverIface(ip, iface)
+				macAddr, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
+				time.Sleep(10 * time.Millisecond)
 				if err != nil {
-					//s.logger.Debug().Msg(err.Error())
+					if err != arping.ErrTimeout {
+						s.logger.Debug().Msg(ping.Iface.Name + " " + ping.IP.String() + " " + err.Error())
+					}
 					continue
 				}
-				pong := &model.Pong{IpAddr: ip, MACAddr: macAddr, Time: time.Now(), Duration: duration}
-				s.pongs.Store(mynet.Ip2int(ip), pong)
-				s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, iface.Name, ip, macAddr, duration))
+				pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration}
+				s.pongs.Store(pong)
+				s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 				runtime.Gosched()
 			}
 		}(s.pingChan, i)
