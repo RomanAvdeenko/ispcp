@@ -2,9 +2,13 @@ package pinger
 
 import (
 	"fmt"
+	mynet "github.com/RomanAvdeenko/utils/net"
 	"ispcp/internal/host"
 	"ispcp/internal/model"
+	"ispcp/internal/store"
+	"ispcp/internal/store/file"
 	"os"
+	"runtime"
 	"time"
 
 	"net"
@@ -14,30 +18,66 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type PingerServer struct {
-	conifg *Config
-	logger *zerolog.Logger
-	host   *host.Host
+type Server struct {
+	conifg   *Config
+	store    store.Store
+	logger   *zerolog.Logger
+	host     *host.Host
+	pingChan chan model.Ping
+	pongs    *model.Pongs
 }
 
-func newServer(cfg *Config) *PingerServer {
-	s := PingerServer{
+func newServer(cfg *Config, store store.Store) *Server {
+	s := Server{
 		conifg: cfg,
-		//logger: zerolog.New(os.Stdout),
-		logger: &zerolog.Logger{},
-		host:   host.NewHost(),
+		store:  store,
+		//logger: &zerolog.New(os.Stdout),
+		logger:   &zerolog.Logger{},
+		host:     host.NewHost(),
+		pingChan: make(chan model.Ping, jobChanLen),
+		pongs:    model.NewPongs(),
 	}
 	s.configure()
 	return &s
 }
 
 func Start(cfg *Config) error {
-	s := newServer(cfg)
-	//
-	return s.start()
+	f, err := os.OpenFile("./store.txt", os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	store := file.New(f)
+	s := newServer(cfg, store)
+
+	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
+	refreshTicker := time.NewTicker(refreshInterval)
+
+	s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s...", s.conifg.ThreadsNumber, refreshInterval))
+
+	go func() {
+		// Start working instantly
+		s.addWork()
+		s.startWorkers()
+
+		for {
+			select {
+			case <-refreshTicker.C:
+				s.store.Store(s.pongs)
+				s.addWork()
+				s.startWorkers()
+			}
+		}
+	}()
+
+	quit := make(chan struct{})
+	<-quit
+
+	return nil
 }
 
-func (s *PingerServer) configure() error {
+func (s *Server) configure() error {
 	s.configureLogger()
 
 	s.host.SetExcludeIfaceNames(s.conifg.ExcludeIfaceNames)
@@ -48,75 +88,53 @@ func (s *PingerServer) configure() error {
 	return nil
 }
 
-func (s *PingerServer) start() error {
-	s.logger.Info().Msg("Start pinger...")
-	ips, _ := s.host.GetIfaceAddresses(s.host.ProcessedIfaces[0])
-	fmt.Println(ips)
-	s.logger.Info().Msg("Stop pinger...")
-	return nil
-}
-
-func (s *PingerServer) configureLogger() {
+func (s *Server) configureLogger() {
 	*s.logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.StampMilli})
 }
 
-func (s *PingerServer) ping(pingChan <-chan string, pongChan chan<- model.Pong, ifaceName string) {
-	for ip := range pingChan {
-		ipAddr := net.ParseIP(ip)
-		macAddr, duration, err := arping.PingOverIfaceByName(ipAddr, ifaceName)
-
-		var alive bool
+// Adds work to ping all required host interfaces
+func (s *Server) addWork() error {
+	s.logger.Info().Msg("Starting to add work.")
+	//Let's walk through the interfaces
+	for _, iface := range s.host.ProcessedIfaces {
+		ifaceAddrs, err := s.host.GetIfaceAddrs(iface)
 		if err != nil {
-			//log.Println(ip, err)
-			alive = false
-		} else {
-			alive = true
+			return err
 		}
-		pongChan <- model.Pong{IpAddr: ipAddr, Alive: alive, RespTime: duration, MacAddr: macAddr}
-	}
-}
-
-func receivePong(pongNum int, pongChan <-chan model.Pong, doneChan chan<- []model.Pong) {
-	var alives []model.Pong
-	for i := 0; i < pongNum; i++ {
-		pong := <-pongChan
-		//fmt.Println("received:", pong)
-		if pong.Alive {
-			alives = append(alives, pong)
+		for _, ifaceAddr := range ifaceAddrs {
+			// Add job to workers
+			go func(iface net.Interface, addr string, pingChan chan<- model.Ping) {
+				s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, ifaceAddr))
+				ips, _ := mynet.GetHostsIP(addr)
+				for _, ip := range ips {
+					pingChan <- model.Ping{IP: ip, Iface: iface}
+				}
+			}(iface, ifaceAddr, s.pingChan)
 		}
 	}
-	doneChan <- alives
+	return nil
 }
 
-func main1() {
-	/*	//arping.EnableVerboseLog()
-		hosts, _ := mynet.GetHosts("192.168.1.1/24")
-
-		pingChan := make(chan string, 4)
-		pongChan := make(chan model.Pong, len(hosts))
-		doneChan := make(chan []model.Pong)
-
+func (s *Server) startWorkers() {
+	for i := 0; i < s.conifg.ThreadsNumber; i++ {
 		// Start workers
-		for i := 0; i < s.ThreadsNumber; i++ {
-			go ping(pingChan, pongChan, "wlo1")
-		}
+		go func(pingChan <-chan model.Ping, num int) {
+			for ping := range pingChan {
+				ip := ping.IP
+				iface := ping.Iface
 
-		// Set job
-		go func() {
-			for _, ip := range hosts {
-				pingChan <- ip
-				//fmt.Println("sent: " + ip)
+				macAddr, duration, err := arping.PingOverIface(ip, iface)
+				if err != nil {
+					//s.logger.Debug().Msg(err.Error())
+					continue
+				}
+
+				pong := &model.Pong{IpAddr: ip, MACAddr: macAddr, RespTime: duration}
+
+				s.pongs.Store(mynet.Ip2int(ip), pong)
+				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, iface.Name, ip, macAddr, duration))
+				runtime.Gosched()
 			}
-			close(pingChan)
-		}()
-
-		// Start Receiver
-		go receivePong(len(hosts), pongChan, doneChan)
-
-		// Get results
-		alives := <-doneChan
-		for _, alive := range alives {
-			fmt.Println(alive)
-		}
-	*/
+		}(s.pingChan, i)
+	}
 }

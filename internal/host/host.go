@@ -61,12 +61,9 @@ func (h *Host) Configure() {
 		processedInterfaces = append(processedInterfaces, iface)
 	}
 	h.ProcessedIfaces = processedInterfaces
-	for _, val := range h.ProcessedIfaces {
-		h.logger.Debug().Msg(val.Name)
-	}
 }
 
-func (h *Host) GetIfaceAddresses(iface net.Interface) (ipNets []string, err error) {
+func (h *Host) GetIfaceAddrs(iface net.Interface) (ipNets []string, err error) {
 	var res []string
 	addrs, err := iface.Addrs()
 	if err != nil {
@@ -90,12 +87,11 @@ func (h *Host) GetIfaceAddresses(iface net.Interface) (ipNets []string, err erro
 		if err != nil {
 			continue
 		}
-		//h.logger.Debug().Msg(ifaceIPNet.String())
 		// skip exclude network IP addresses from configuration
 		if myslice.IsMatchesValue(h.excludeNetIPs, ifaceIPNet.String()) {
 			continue
 		}
-		res = append(res, ifaceIPNet.String())
+		res = append(res, ifaceIP.String())
 	}
 	return res, nil
 }

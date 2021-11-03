@@ -1,7 +1,7 @@
 package store
 
-import "alive/internal/model"
+import "ispcp/internal/model"
 
 type Store interface {
-	Add(model.CheckHostRecord) error
+	Store(pongs *model.Pongs) error
 }

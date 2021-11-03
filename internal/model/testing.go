@@ -15,8 +15,7 @@ func TestCheckHostRecord(t *testing.T) *Pong {
 
 	return &Pong{
 		IpAddr:   ip,
-		MacAddr:  mac,
-		Alive:    true,
+		MACAddr:  mac,
 		RespTime: time,
 	}
 }
