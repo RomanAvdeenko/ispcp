@@ -16,6 +16,9 @@
 # Hiden
 .*
 
+#Log and out
+store.txt
+
 #Binary
 main
 pinger
