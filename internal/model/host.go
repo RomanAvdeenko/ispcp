@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -16,32 +17,39 @@ type Ping struct {
 type Pong struct {
 	IpAddr   net.IP
 	MACAddr  net.HardwareAddr
-	RespTime time.Duration
+	Alive    bool
+	Duration time.Duration
+	Time     time.Time
 }
 
 type Pongs struct {
 	sync.RWMutex
-	pong map[uint32]Pong
+	pong []Pong
 }
 
 func NewPongs() *Pongs {
-	return &Pongs{pong: make(map[uint32]Pong)}
+	return &Pongs{pong: make([]Pong, 0, 32)}
 }
 
 func (p *Pongs) Store(key uint32, val *Pong) {
 	p.Lock()
 	defer p.Unlock()
 
-	p.pong[key] = *val
+	p.pong = append(p.pong, *val)
 }
 
-func (p *Pongs) LoadAll() *map[uint32]Pong {
-	res := make(map[uint32]Pong)
-	p.RLock()
-	defer p.RUnlock()
+func (p *Pongs) LoadAll() *[]Pong {
+	return &p.pong
+}
 
-	for k, v := range p.pong {
-		res[k] = v
-	}
-	return &res
+func (p *Pongs) Clear() {
+	p.Lock()
+	defer p.Unlock()
+
+	p.pong = p.pong[:0]
+}
+
+// Pong human friendly view implementation
+func (p *Pong) Human() string {
+	return fmt.Sprintf("ip: %s,\talive: %s,\tmac: %s,\tdate: %s,\tduration: %s", p.IpAddr, p.IpAddr, p.MACAddr, p.Time.Format(time.Stamp), p.Duration)
 }

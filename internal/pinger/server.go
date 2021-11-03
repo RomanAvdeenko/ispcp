@@ -42,7 +42,7 @@ func newServer(cfg *Config, store store.Store) *Server {
 }
 
 func Start(cfg *Config) error {
-	f, err := os.OpenFile("./store.txt", os.O_RDWR|os.O_CREATE, 0644)
+	f, err := os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
@@ -65,6 +65,7 @@ func Start(cfg *Config) error {
 			select {
 			case <-refreshTicker.C:
 				s.store.Store(s.pongs)
+				s.pongs.Clear()
 				s.addWork()
 				s.startWorkers()
 			}
@@ -89,7 +90,7 @@ func (s *Server) configure() error {
 }
 
 func (s *Server) configureLogger() {
-	*s.logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.StampMilli})
+	*s.logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Stamp})
 }
 
 // Adds work to ping all required host interfaces
@@ -128,11 +129,9 @@ func (s *Server) startWorkers() {
 					//s.logger.Debug().Msg(err.Error())
 					continue
 				}
-
-				pong := &model.Pong{IpAddr: ip, MACAddr: macAddr, RespTime: duration}
-
+				pong := &model.Pong{IpAddr: ip, MACAddr: macAddr, Time: time.Now(), Duration: duration}
 				s.pongs.Store(mynet.Ip2int(ip), pong)
-				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, iface.Name, ip, macAddr, duration))
+				s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, iface.Name, ip, macAddr, duration))
 				runtime.Gosched()
 			}
 		}(s.pingChan, i)

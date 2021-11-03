@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"ispcp/internal/model"
 	"os"
+	"time"
 )
 
 type Store struct {
@@ -16,11 +17,20 @@ func New(file *os.File) *Store {
 
 func (s *Store) Store(pongs *model.Pongs) error {
 	ps := pongs.LoadAll()
+	_, err := s.file.WriteString("->: " + time.Now().Format(time.Stamp) + "\n")
+	if err != nil {
+		return err
+	}
 	for _, v := range *ps {
-		_, err := fmt.Fprintf(s.file, "%v\n", v)
+		_, err := s.file.WriteString(v.Human() + "\n")
 		if err != nil {
 			return err
 		}
 	}
+	_, err = s.file.WriteString(fmt.Sprintf("->Total:\t%v\n", len(*ps)))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

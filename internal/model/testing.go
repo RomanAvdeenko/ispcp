@@ -11,11 +11,11 @@ func TestCheckHostRecord(t *testing.T) *Pong {
 
 	ip := net.ParseIP("8.8.8.8")
 	mac, _ := net.ParseMAC("b4:d5:bd:b8:c1:94")
-	time := time.Duration(0)
+	time := time.Now()
 
 	return &Pong{
-		IpAddr:   ip,
-		MACAddr:  mac,
-		RespTime: time,
+		IpAddr:  ip,
+		MACAddr: mac,
+		Time:    time,
 	}
 }
