@@ -26,9 +26,3 @@ func (s *Store) Store(pongs *model.Pongs) error {
 	}
 	return nil
 }
-
-//`alive` (
-//`alive_ip` int(10) unsigned NOT NULL,
-//`alive_is` tinyint(1) NOT NULL,
-//`alive_ts` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-//`alive_mac` char(20) NOT NULL DEFAULT '0'

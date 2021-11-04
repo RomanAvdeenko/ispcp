@@ -16,6 +16,9 @@
 # Hiden
 .*
 
+#Configs with secrets
+configs/config.sample.yaml
+
 #Log and out
 store.txt
 

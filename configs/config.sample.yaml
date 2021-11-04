@@ -1,0 +1,10 @@
+exclude-ifaces:
+  - lo*
+  - bond*
+  - wg*
+exclude-networks:
+  [ 10.3.* ]
+threads: 32
+restart-interval: 120
+db-uri: "ispcsroute:passwoowd@tcp(10.2.1.20)/billing-dev"
+file-store-name: "store.txt"
