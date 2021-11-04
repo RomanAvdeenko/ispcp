@@ -8,7 +8,6 @@ import (
 	"ispcp/internal/store"
 	"ispcp/internal/store/file"
 	"os"
-	"os/exec"
 	"regexp"
 	"runtime"
 	"time"
@@ -134,37 +133,27 @@ func (s *Server) startWorkers() {
 		// Start workers
 		go func(pingChan <-chan model.Ping, num int) {
 			for ping := range pingChan {
-
-				//macAddr, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
-
-				ip := ping.IP.String()
-
-				args := []string{"-I", ping.Iface.Name, ip, "-c1"}
-				//args := []string{"-i", ping.Iface.Name, ip}
-
-				cmd := "/usr/bin/arping"
-				//cmd := "/home/rav/go/bin/arpin"
-
-				//s.logger.Printf("%s %s", cmd, args)
-
-				out, err := exec.Command(cmd, args...).CombinedOutput()
-				//s.logger.Error().Msg(err.Error() + " " + string(out))
-
+				//ip := ping.IP.String()
+				//				args := []string{"-I", ping.Iface.Name, ip, "-c1"}
+				//cmd := "/usr/bin/arping"
+				////s.logger.Printf("%s %s", cmd, args)
+				//				out, err := exec.Command(cmd, args...).CombinedOutput()
 				//time.Sleep(20 * time.Millisecond)
 
+				macAddr, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
+
 				if err != nil {
-					if err != arping.ErrTimeout && string(out) != "timeout\n" {
+					//	if err != arping.ErrTimeout && string(out) != "timeout\n" {
+					if err != arping.ErrTimeout {
 						//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, out)
 						//s.logger.Error().Msg(string(out))
 					}
 					continue
 				}
-				//
+				//MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
+				pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration, Alive: true}
+				//pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: true, MACAddr: MAC}
 
-				MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
-				//
-				//pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration, Alive: true}
-				pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: true, MACAddr: MAC}
 				s.pongs.Store(pong)
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 				runtime.Gosched()
