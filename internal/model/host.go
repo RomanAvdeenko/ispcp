@@ -31,6 +31,10 @@ func NewPongs() *Pongs {
 	return &Pongs{pong: make([]Pong, 0, 32)}
 }
 
+func (p *Pongs) Len() int {
+	return len(p.pong)
+}
+
 func (p *Pongs) Store(val *Pong) {
 	p.Lock()
 	defer p.Unlock()
@@ -39,6 +43,11 @@ func (p *Pongs) Store(val *Pong) {
 }
 
 func (p *Pongs) LoadAll() *[]Pong {
+	p.RLock()
+	defer p.RUnlock()
+
+	res := make([]Pong, len(p.pong))
+	copy(res, p.pong)
 	return &p.pong
 }
 
@@ -51,5 +60,5 @@ func (p *Pongs) Clear() {
 
 // Pong human friendly view implementation
 func (p *Pong) Human() string {
-	return fmt.Sprintf("ip: %s,\talive: %s,\tmac: %s,\tdate: %s,\tduration: %s", p.IpAddr, p.IpAddr, p.MACAddr, p.Time.Format(time.Stamp), p.Duration)
+	return fmt.Sprintf("ip: %s,\talive: %v,\tmac: %s,\tdate: %s,\tduration: %s", p.IpAddr, p.Alive, p.MACAddr, p.Time.Format(time.Stamp), p.Duration)
 }

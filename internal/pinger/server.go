@@ -8,6 +8,8 @@ import (
 	"ispcp/internal/store"
 	"ispcp/internal/store/file"
 	"os"
+	"os/exec"
+	"regexp"
 	"runtime"
 	"time"
 
@@ -17,6 +19,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
+
+var macRegexp = regexp.MustCompile(`[a-fA-F0-9:]{17}|[a-fA-F0-9]{12}`)
 
 type Server struct {
 	conifg   *Config
@@ -54,6 +58,10 @@ func Start(cfg *Config) error {
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
 	refreshTicker := time.NewTicker(refreshInterval)
 
+	//
+	arping.SetTimeout(10 * time.Second)
+	//
+
 	s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s...", s.conifg.ThreadsNumber, refreshInterval))
 
 	go func() {
@@ -64,10 +72,15 @@ func Start(cfg *Config) error {
 		for {
 			select {
 			case <-refreshTicker.C:
-				s.store.Store(s.pongs)
-				s.pongs.Clear()
-				s.addWork()
-				s.startWorkers()
+				// Check completion for previous work
+				if len(s.pingChan) == 0 {
+					s.store.Store(s.pongs)
+					s.pongs.Clear()
+					s.addWork()
+					s.startWorkers()
+				} else {
+					s.logger.Info().Msg("Check completion of previous work. Previous work has not been completed. Skip.")
+				}
 			}
 		}
 	}()
@@ -95,7 +108,7 @@ func (s *Server) configureLogger() {
 
 // Adds work to ping all required host interfaces
 func (s *Server) addWork() error {
-	s.logger.Info().Msg("Starting to add work.")
+	s.logger.Debug().Msg("Starting to add work.")
 	//Let's walk through the interfaces
 	for _, iface := range s.host.ProcessedIfaces {
 		ifaceAddrs, err := s.host.GetIfaceAddrs(iface)
@@ -122,17 +135,38 @@ func (s *Server) startWorkers() {
 		go func(pingChan <-chan model.Ping, num int) {
 			for ping := range pingChan {
 
-				macAddr, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
-				time.Sleep(10 * time.Millisecond)
+				//macAddr, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
+
+				ip := ping.IP.String()
+
+				args := []string{"-I", ping.Iface.Name, ip, "-c1"}
+				//args := []string{"-i", ping.Iface.Name, ip}
+
+				cmd := "/usr/bin/arping"
+				//cmd := "/home/rav/go/bin/arpin"
+
+				//s.logger.Printf("%s %s", cmd, args)
+
+				out, err := exec.Command(cmd, args...).CombinedOutput()
+				//s.logger.Error().Msg(err.Error() + " " + string(out))
+
+				//time.Sleep(20 * time.Millisecond)
+
 				if err != nil {
-					if err != arping.ErrTimeout {
-						s.logger.Debug().Msg(ping.Iface.Name + " " + ping.IP.String() + " " + err.Error())
+					if err != arping.ErrTimeout && string(out) != "timeout\n" {
+						//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, out)
+						//s.logger.Error().Msg(string(out))
 					}
 					continue
 				}
-				pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration}
+				//
+
+				MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
+				//
+				//pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration, Alive: true}
+				pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: true, MACAddr: MAC}
 				s.pongs.Store(pong)
-				s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
+				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 				runtime.Gosched()
 			}
 		}(s.pingChan, i)
