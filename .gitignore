@@ -17,7 +17,7 @@
 .*
 
 #Configs with secrets
-configs/config.sample.yaml
+configs/config.yaml
 
 #Log and out
 store.txt
