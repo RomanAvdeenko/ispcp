@@ -1,10 +1,11 @@
 package pinger
 
 const (
-	concurrentMax      = 256
-	concurrentDefault  = 16
-	jobChanLen         = 4096
-	restartIntervalMin = 5
+	concurrentMax        = 256
+	concurrentDefault    = 16
+	jobChanLen           = 4096
+	restartIntervalMin   = 5
+	fileStoreNameDefault = "store.txt"
 )
 
 type Config struct {
@@ -12,6 +13,8 @@ type Config struct {
 	ExcludeNetIPs     []string `yaml:"exclude-networks"`
 	ThreadsNumber     int      `yaml:"threads"`
 	RestartInterval   int      `yaml:"restart-interval"`
+	DbURI             string   `yaml:"db-uri"`
+	FileStoreName     string   `yaml:"file-store-name""`
 }
 
 func NewConfig() *Config {
@@ -28,5 +31,8 @@ func (cfg *Config) Correct() {
 
 	if cfg.RestartInterval < restartIntervalMin {
 		cfg.RestartInterval = restartIntervalMin
+	}
+	if cfg.FileStoreName == "" {
+		cfg.FileStoreName = fileStoreNameDefault
 	}
 }

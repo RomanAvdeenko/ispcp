@@ -1,22 +1,25 @@
 package pinger
 
 import (
+	"database/sql"
 	"fmt"
 	mynet "github.com/RomanAvdeenko/utils/net"
 	"ispcp/internal/host"
 	"ispcp/internal/model"
 	"ispcp/internal/store"
-	"ispcp/internal/store/file"
+	"ispcp/internal/store/mysql"
 	"os"
+	"os/exec"
 	"regexp"
 	"runtime"
 	"time"
 
 	"net"
 
-	"github.com/j-keck/arping"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var macRegexp = regexp.MustCompile(`[a-fA-F0-9:]{17}|[a-fA-F0-9]{12}`)
@@ -45,21 +48,34 @@ func newServer(cfg *Config, store store.Store) *Server {
 }
 
 func Start(cfg *Config) error {
-	f, err := os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	/*	// File store
+		f, err := os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		store := file.New(f)
+	*/
+	// Mysql store
+	db, err := sql.Open("mysql", cfg.DbURI)
+	fmt.Println(cfg.DbURI)
 	if err != nil {
+		fmt.Println("err: ", err)
 		return err
 	}
-	defer f.Close()
+	defer db.Close()
 
-	store := file.New(f)
+	if err := db.Ping(); err != nil {
+		fmt.Println("err: ", err)
+		return err
+	}
+
+	store := mysql.New(db)
 	s := newServer(cfg, store)
 
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
 	refreshTicker := time.NewTicker(refreshInterval)
-
-	//
-	//arping.SetTimeout(10 * time.Second)
-	//
 
 	s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s...", s.conifg.ThreadsNumber, refreshInterval))
 
@@ -73,7 +89,11 @@ func Start(cfg *Config) error {
 			case <-refreshTicker.C:
 				// Check completion for previous work
 				if len(s.pingChan) == 0 {
-					s.store.Store(s.pongs)
+					err := s.store.Store(s.pongs)
+					if err != nil {
+						s.logger.Error().Msg("Store error: " + err.Error())
+						continue
+					}
 					s.pongs.Clear()
 					s.addWork()
 					s.startWorkers()
@@ -133,26 +153,25 @@ func (s *Server) startWorkers() {
 		// Start workers
 		go func(pingChan <-chan model.Ping, num int) {
 			for ping := range pingChan {
-				//ip := ping.IP.String()
-				//				args := []string{"-I", ping.Iface.Name, ip, "-c1"}
-				//cmd := "/usr/bin/arping"
-				////s.logger.Printf("%s %s", cmd, args)
-				//out, err := exec.Command(cmd, args...).CombinedOutput()
-				//time.Sleep(20 * time.Millisecond)
+				ip := ping.IP.String()
+				args := []string{"-I", ping.Iface.Name, ip, "-c1"}
+				cmd := "/usr/bin/arping"
+				//s.logger.Printf("%s %s", cmd, args)
+				out, err := exec.Command(cmd, args...).CombinedOutput()
 
-				macAddr, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
+				//macAddr, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
 
 				if err != nil {
 					//	if err != arping.ErrTimeout && string(out) != "timeout\n" {
-					if err != arping.ErrTimeout {
-						//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, "out")
-						//s.logger.Error().Msg(string(out))
-					}
+					//if err != arping.ErrTimeout {
+					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, "out")
+					//s.logger.Error().Msg(string(out))
+					//}
 					continue
 				}
-				//MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
-				pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration, Alive: true}
-				//pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: true, MACAddr: MAC}
+				MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
+				//pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration, Alive: true}
+				pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: true, MACAddr: MAC}
 
 				s.pongs.Store(pong)
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
