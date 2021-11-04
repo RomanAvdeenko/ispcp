@@ -58,7 +58,7 @@ func Start(cfg *Config) error {
 	refreshTicker := time.NewTicker(refreshInterval)
 
 	//
-	arping.SetTimeout(10 * time.Second)
+	//arping.SetTimeout(10 * time.Second)
 	//
 
 	s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s...", s.conifg.ThreadsNumber, refreshInterval))
@@ -137,7 +137,7 @@ func (s *Server) startWorkers() {
 				//				args := []string{"-I", ping.Iface.Name, ip, "-c1"}
 				//cmd := "/usr/bin/arping"
 				////s.logger.Printf("%s %s", cmd, args)
-				//				out, err := exec.Command(cmd, args...).CombinedOutput()
+				//out, err := exec.Command(cmd, args...).CombinedOutput()
 				//time.Sleep(20 * time.Millisecond)
 
 				macAddr, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
@@ -145,7 +145,7 @@ func (s *Server) startWorkers() {
 				if err != nil {
 					//	if err != arping.ErrTimeout && string(out) != "timeout\n" {
 					if err != arping.ErrTimeout {
-						//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, out)
+						//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, "out")
 						//s.logger.Error().Msg(string(out))
 					}
 					continue
