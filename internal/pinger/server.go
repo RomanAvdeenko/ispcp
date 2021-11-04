@@ -59,7 +59,6 @@ func Start(cfg *Config) error {
 	*/
 	// Mysql store
 	db, err := sql.Open("mysql", cfg.DbURI)
-	fmt.Println(cfg.DbURI)
 	if err != nil {
 		fmt.Println("err: ", err)
 		return err
