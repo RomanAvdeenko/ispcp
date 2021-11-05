@@ -173,13 +173,13 @@ func (s *Server) startWorkers() {
 					//}
 				} else {
 					alive = true
+					s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 				}
 				MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
 				//pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration, Alive: true}
 				pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: alive, MACAddr: MAC}
 
 				s.pongs.Store(pong)
-				s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 				runtime.Gosched()
 			}
