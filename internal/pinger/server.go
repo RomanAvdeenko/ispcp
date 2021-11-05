@@ -163,6 +163,7 @@ func (s *Server) startWorkers() {
 				//out, err := exec.Command(cmd, args...).CombinedOutput()
 
 				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
+				time.Sleep(30 * time.Microsecond)
 
 				if err != nil {
 					//	if err != arping.ErrTimeout && string(out) != "timeout\n" {
