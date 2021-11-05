@@ -131,16 +131,14 @@ func (s *Server) addWork() error {
 	s.logger.Debug().Msg("Starting to add work.")
 	//Let's walk through the interfaces
 	for _, iface := range s.host.ProcessedIfaces {
-		s.logger.Info().Msg("Interface: " + iface.Name)
 		ifaceAddrs, err := s.host.GetIfaceAddrs(iface)
 		if err != nil {
 			return err
 		}
 		for _, ifaceAddr := range ifaceAddrs {
-			s.logger.Info().Msg("Addr :" + ifaceAddr)
 			// Add job to workers
 			go func(iface net.Interface, addr string, pingChan chan<- model.Ping) {
-				s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, ifaceAddr))
+				s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
 				ips, _ := mynet.GetHostsIP(addr)
 				for _, ip := range ips {
 					pingChan <- model.Ping{IP: ip, Iface: iface}
