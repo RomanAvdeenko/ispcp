@@ -8,7 +8,6 @@ import (
 	"ispcp/internal/store"
 	"ispcp/internal/store/mysql"
 	"os"
-	"runtime"
 	"time"
 
 	mynet "github.com/RomanAvdeenko/utils/net"
@@ -163,7 +162,7 @@ func (s *Server) startWorkers() {
 				//out, err := exec.Command(cmd, args...).CombinedOutput()
 
 				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
-				time.Sleep(30 * time.Microsecond)
+				time.Sleep(10 * time.Millisecond)
 
 				if err != nil {
 					//	if err != arping.ErrTimeout && string(out) != "timeout\n" {
@@ -181,7 +180,7 @@ func (s *Server) startWorkers() {
 
 				s.pongs.Store(pong)
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
-				runtime.Gosched()
+				//runtime.Gosched()
 			}
 		}(s.pingChan, i)
 	}
