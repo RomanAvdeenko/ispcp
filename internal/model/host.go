@@ -43,11 +43,13 @@ func (p *Pongs) Store(val *Pong) {
 }
 
 func (p *Pongs) LoadAll() *[]Pong {
-	p.RLock()
-	defer p.RUnlock()
+	// p.RLock()
+	// defer p.RUnlock()
 
-	res := make([]Pong, len(p.pong))
-	copy(res, p.pong)
+	// res := make([]Pong, len(p.pong))
+	// copy(res, p.pong)
+	// return &p.pong
+
 	return &p.pong
 }
 
