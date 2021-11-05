@@ -8,12 +8,11 @@ import (
 	"ispcp/internal/store"
 	"ispcp/internal/store/mysql"
 	"os"
-	"os/exec"
-	"regexp"
 	"runtime"
 	"time"
 
 	mynet "github.com/RomanAvdeenko/utils/net"
+	"github.com/j-keck/arping"
 
 	"net"
 
@@ -23,7 +22,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var macRegexp = regexp.MustCompile(`[a-fA-F0-9:]{17}|[a-fA-F0-9]{12}`)
+//var macRegexp = regexp.MustCompile(`[a-fA-F0-9:]{17}|[a-fA-F0-9]{12}`)
 
 type Server struct {
 	conifg   *Config
@@ -32,6 +31,7 @@ type Server struct {
 	host     *host.Host
 	pingChan chan model.Ping
 	pongs    *model.Pongs
+	location *time.Location
 }
 
 func newServer(cfg *Config, store store.Store) *Server {
@@ -111,6 +111,7 @@ func Start(cfg *Config) error {
 }
 
 func (s *Server) configure() error {
+	s.location, _ = time.LoadLocation("Europe/Kiev")
 	s.configureLogger()
 
 	s.host.SetExcludeIfaceNames(s.conifg.ExcludeIfaceNames)
@@ -155,13 +156,13 @@ func (s *Server) startWorkers() {
 		go func(pingChan <-chan model.Ping, num int) {
 			for ping := range pingChan {
 				var alive bool
-				ip := ping.IP.String()
-				args := []string{"-I", ping.Iface.Name, ip, "-c1"}
-				cmd := "/usr/bin/arping"
+				//ip := ping.IP.String()
+				//args := []string{"-I", ping.Iface.Name, ip, "-c1"}
+				//cmd := "/usr/bin/arping"
 				//s.logger.Printf("%s %s", cmd, args)
-				out, err := exec.Command(cmd, args...).CombinedOutput()
+				//out, err := exec.Command(cmd, args...).CombinedOutput()
 
-				//macAddr, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
+				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
 
 				if err != nil {
 					//	if err != arping.ErrTimeout && string(out) != "timeout\n" {
@@ -173,9 +174,9 @@ func (s *Server) startWorkers() {
 					alive = true
 					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 				}
-				MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
-				//pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration, Alive: true}
-				pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: alive, MACAddr: MAC}
+				//MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
+				pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: alive}
+				//pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: alive, MACAddr: MAC}
 
 				s.pongs.Store(pong)
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))

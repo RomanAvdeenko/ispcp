@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"ispcp/internal/model"
+	"log"
 
 	mynet "github.com/RomanAvdeenko/utils/net"
 )
@@ -20,7 +21,7 @@ func (s *Store) Store(pongs *model.Pongs) error {
 
 	ps := pongs.LoadAll()
 	for _, v := range *ps {
-		//log.Default().Println("Write to db" + v.Human())
+		log.Default().Println("Write to db: " + v.Human())
 		_, err := s.db.Exec(INSERT_QUERY, mynet.Ip2int(v.IpAddr), v.Alive, v.Time, v.MACAddr.String())
 		if err != nil {
 			return err
