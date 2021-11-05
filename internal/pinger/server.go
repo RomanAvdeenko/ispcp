@@ -168,12 +168,12 @@ func (s *Server) startWorkers() {
 				if err != nil {
 					//	if err != arping.ErrTimeout && string(out) != "timeout\n" {
 					//if err != arping.ErrTimeout {
-					s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, "")
+					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, "")
 					//s.logger.Error().Msg(string(out))
 					//}
 				} else {
 					alive = true
-					s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
+					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 				}
 				MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
 				//pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration, Alive: true}
