@@ -2,8 +2,10 @@ package mysql
 
 import (
 	"database/sql"
-	mynet "github.com/RomanAvdeenko/utils/net"
 	"ispcp/internal/model"
+	"log"
+
+	mynet "github.com/RomanAvdeenko/utils/net"
 )
 
 type Store struct {
@@ -19,6 +21,7 @@ func (s *Store) Store(pongs *model.Pongs) error {
 
 	ps := pongs.LoadAll()
 	for _, v := range *ps {
+		log.Default().Println("Write to db" + v.Human())
 		_, err := s.db.Exec(INSERT_QUERY, mynet.Ip2int(v.IpAddr), 1, v.Time, v.MACAddr.String())
 		if err != nil {
 			return err
