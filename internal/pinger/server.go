@@ -156,6 +156,7 @@ func (s *Server) startWorkers() {
 		// Start workers
 		go func(pingChan <-chan model.Ping, num int) {
 			for ping := range pingChan {
+				var alive bool
 				ip := ping.IP.String()
 				args := []string{"-I", ping.Iface.Name, ip, "-c1"}
 				cmd := "/usr/bin/arping"
@@ -170,11 +171,12 @@ func (s *Server) startWorkers() {
 					s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, "")
 					//s.logger.Error().Msg(string(out))
 					//}
-					continue
+				} else {
+					alive = true
 				}
 				MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
 				//pong := &model.Pong{IpAddr: ping.IP, MACAddr: macAddr, Time: time.Now(), Duration: duration, Alive: true}
-				pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: true, MACAddr: MAC}
+				pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: alive, MACAddr: MAC}
 
 				s.pongs.Store(pong)
 				s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
