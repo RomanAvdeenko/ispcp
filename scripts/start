@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd ..
-/usr/bin/screen -AdmS pinger /bin/bash -c './pinger; /bin/bash'
+cd ~/Go/ispcp
+/usr/bin/screen -LAdmS pinger /bin/bash -c './pinger; /bin/bash'
