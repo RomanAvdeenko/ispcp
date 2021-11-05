@@ -13,7 +13,7 @@ type Config struct {
 	ExcludeNetIPs     []string `yaml:"exclude-networks"`
 	ThreadsNumber     int      `yaml:"threads"`
 	RestartInterval   int      `yaml:"restart-interval"`
-	DbURI             string   `yaml:"dsn"`
+	URI               string   `yaml:"dsn"`
 	FileStoreName     string   `yaml:"file-store-name""`
 }
 
