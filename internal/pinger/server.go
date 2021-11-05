@@ -3,7 +3,6 @@ package pinger
 import (
 	"database/sql"
 	"fmt"
-	mynet "github.com/RomanAvdeenko/utils/net"
 	"ispcp/internal/host"
 	"ispcp/internal/model"
 	"ispcp/internal/store"
@@ -13,6 +12,8 @@ import (
 	"regexp"
 	"runtime"
 	"time"
+
+	mynet "github.com/RomanAvdeenko/utils/net"
 
 	"net"
 
@@ -122,6 +123,7 @@ func (s *Server) configure() error {
 
 func (s *Server) configureLogger() {
 	*s.logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Stamp})
+	s.logger.Level(zerolog.DebugLevel)
 }
 
 // Adds work to ping all required host interfaces
@@ -165,7 +167,7 @@ func (s *Server) startWorkers() {
 				if err != nil {
 					//	if err != arping.ErrTimeout && string(out) != "timeout\n" {
 					//if err != arping.ErrTimeout {
-					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, "out")
+					s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, "")
 					//s.logger.Error().Msg(string(out))
 					//}
 					continue
@@ -175,6 +177,7 @@ func (s *Server) startWorkers() {
 				pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: true, MACAddr: MAC}
 
 				s.pongs.Store(pong)
+				s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 				runtime.Gosched()
 			}
