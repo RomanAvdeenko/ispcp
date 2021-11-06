@@ -1,14 +1,13 @@
 package pinger
 
 import (
-	"database/sql"
 	"fmt"
 
 	"ispcp/internal/arping"
 	"ispcp/internal/host"
 	"ispcp/internal/model"
 	"ispcp/internal/store"
-	"ispcp/internal/store/mysql"
+	"ispcp/internal/store/file"
 	"os"
 	"time"
 
@@ -21,8 +20,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 )
-
-//var macRegexp = regexp.MustCompile(`[a-fA-F0-9:]{17}|[a-fA-F0-9]{12}`)
 
 type Server struct {
 	conifg   *Config
@@ -49,29 +46,32 @@ func newServer(cfg *Config, store store.Store) *Server {
 }
 
 func Start(cfg *Config) error {
-	/*	// File store
-		f, err := os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
+	//arping.SetTimeout(100 * time.Millisecond)
+	arping.EnableVerboseLog()
 
-		store := file.New(f)
-	*/
-	// Mysql store
-	db, err := sql.Open("mysql", cfg.URI)
+	// File store
+	f, err := os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Println("err: ", err)
 		return err
 	}
-	defer db.Close()
+	defer f.Close()
 
-	if err := db.Ping(); err != nil {
-		fmt.Println("err: ", err)
-		return err
-	}
+	store := file.New(f)
 
-	store := mysql.New(db)
+	// // Mysql store
+	// db, err := sql.Open("mysql", cfg.URI)
+	// if err != nil {
+	// 	fmt.Println("err: ", err)
+	// 	return err
+	// }
+	// defer db.Close()
+
+	// if err := db.Ping(); err != nil {
+	// 	fmt.Println("err: ", err)
+	// 	return err
+	// }
+
+	// store := mysql.New(db)
 	s := newServer(cfg, store)
 
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
@@ -156,30 +156,16 @@ func (s *Server) startWorkers() {
 		go func(pingChan <-chan model.Ping, num int) {
 			for ping := range pingChan {
 				var alive bool
-				//ip := ping.IP.String()
-				//args := []string{"-I", ping.Iface.Name, ip, "-c1"}
-				//cmd := "/usr/bin/arping"
-				//s.logger.Printf("%s %s", cmd, args)
-				//out, err := exec.Command(cmd, args...).CombinedOutput()
 
 				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
-				time.Sleep(10 * time.Millisecond)
+				//time.Sleep(200 * time.Millisecond)
 
-				if err != nil {
-					//	if err != arping.ErrTimeout && string(out) != "timeout\n" {
-					//if err != arping.ErrTimeout {
-					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, err, "")
-					//s.logger.Error().Msg(string(out))
-					//}
-				} else {
+				if err == nil {
 					alive = true
+					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: alive}
+					s.pongs.Store(pong)
 					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 				}
-				//MAC, _ := net.ParseMAC(macRegexp.FindString(string(out)))
-				pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: alive}
-				//pong := &model.Pong{IpAddr: ping.IP, Time: time.Now(), Alive: alive, MACAddr: MAC}
-
-				s.pongs.Store(pong)
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 				//runtime.Gosched()
 			}
