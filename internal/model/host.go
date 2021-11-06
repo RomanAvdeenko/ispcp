@@ -57,7 +57,8 @@ func (p *Pongs) Clear() {
 	p.Lock()
 	defer p.Unlock()
 
-	p.pong = p.pong[:0]
+	//p.pong = p.pong[:0]
+	p.pong = nil
 }
 
 // Pong human friendly view implementation

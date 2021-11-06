@@ -3,6 +3,8 @@ package pinger
 import (
 	"database/sql"
 	"fmt"
+
+	"ispcp/internal/arping"
 	"ispcp/internal/host"
 	"ispcp/internal/model"
 	"ispcp/internal/store"
@@ -11,7 +13,6 @@ import (
 	"time"
 
 	mynet "github.com/RomanAvdeenko/utils/net"
-	"github.com/j-keck/arping"
 
 	"net"
 
@@ -58,7 +59,7 @@ func Start(cfg *Config) error {
 		store := file.New(f)
 	*/
 	// Mysql store
-	db, err := sql.Open("mysql", cfg.DbURI)
+	db, err := sql.Open("mysql", cfg.URI)
 	if err != nil {
 		fmt.Println("err: ", err)
 		return err

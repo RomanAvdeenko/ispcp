@@ -1,7 +1,7 @@
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
-github.com/RomanAvdeenko/utils v1.1.1 h1:FnpQGRhITz09g6crTEIRvdiMbv5lFfzO4vbAVJZf6gQ=
-github.com/RomanAvdeenko/utils v1.1.1/go.mod h1:RIDv2zbRTneV3sV+4HvQDUsJoYntq9b4CB5OKfscLZs=
+github.com/RomanAvdeenko/arping v1.0.3 h1:TH5b/YehC99mc6i0IJe6Yq4Qbn0Y3/qTpPMTzQvhItM=
+github.com/RomanAvdeenko/arping v1.0.3/go.mod h1:0ar9yIqcV+ytv5OXiRF5Wbz7/B7M19tZSNtErlIIqlw=
 github.com/RomanAvdeenko/utils v1.1.3 h1:aBkArPFhAhPrFjaqb0isjtSXarMKY/f0riZmrjzV5po=
 github.com/RomanAvdeenko/utils v1.1.3/go.mod h1:RIDv2zbRTneV3sV+4HvQDUsJoYntq9b4CB5OKfscLZs=
 github.com/coreos/go-systemd/v22 v22.3.2/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
@@ -13,8 +13,6 @@ github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LB
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/ilyakaznacheev/cleanenv v1.2.5 h1:/SlcF9GaIvefWqFJzsccGG/NJdoaAwb7Mm7ImzhO3DM=
 github.com/ilyakaznacheev/cleanenv v1.2.5/go.mod h1:/i3yhzwZ3s7hacNERGFwvlhwXMDcaqwIzmayEhbRplk=
-github.com/j-keck/arping v1.0.2 h1:hlLhuXgQkzIJTZuhMigvG/CuSkaspeaD9hRDk2zuiMI=
-github.com/j-keck/arping v1.0.2/go.mod h1:aJbELhR92bSk7tp79AWM/ftfc90EfEi2bQJrbBFOsPw=
 github.com/joho/godotenv v1.3.0 h1:Zjp+RcGpHhGlrMbJzXTrZZPrWj+1vfm90La1wgB6Bhc=
 github.com/joho/godotenv v1.3.0/go.mod h1:7hK45KPybAkOC6peb+G5yklZfMxEjkZhHbwpqxOKXbg=
 github.com/kr/pretty v0.1.0 h1:L/CwN0zerZDmRFUapSPitk6f+Q3+0za1rQkzVuMiMFI=
