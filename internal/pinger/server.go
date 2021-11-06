@@ -153,19 +153,20 @@ func (s *Server) addWork() error {
 func (s *Server) startWorkers() {
 	for i := 0; i < s.conifg.ThreadsNumber; i++ {
 		// Start workers
-		go func(pingChan <-chan model.Ping, num int) {
+		go func(pingChan chan model.Ping, num int) {
 			for ping := range pingChan {
 				var alive bool
-
 				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
-				//time.Sleep(200 * time.Millisecond)
-
-				if err == nil {
-					alive = true
-					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: alive}
-					s.pongs.Store(pong)
-					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
+				if err != nil {
+					if err != arping.ErrTimeout {
+						// Try resend
+						s.logger.Error().Msg("need to send again ")
+					}
 				}
+				alive = true
+				pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: alive}
+				s.pongs.Store(pong)
+				//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 				//runtime.Gosched()
 			}
