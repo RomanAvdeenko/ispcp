@@ -162,10 +162,11 @@ func (s *Server) startWorkers() {
 						// Try resend
 						s.logger.Error().Msg("need to send again ")
 					}
+				} else {
+					alive = true
+					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: alive}
+					s.pongs.Store(pong)
 				}
-				alive = true
-				pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: alive}
-				s.pongs.Store(pong)
 				//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 				//runtime.Gosched()
