@@ -134,34 +134,33 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 	go func() {
 		// send arp request
 		//verboseLog.Printf("arping '%s' over interface: '%s' with address: '%s'\n", dstIP, iface.Name, srcIP)
-		for c := 0; c < 3; c++ {
-			if sendTime, err := sock.send(request); err != nil {
-				verboseLog.Printf("error sock.send: arping '%s' over interface: '%s' with address: '%s, err: %s'\n", dstIP, iface.Name, srcIP, err)
-				time.Sleep(20 * time.Nanosecond)
-			} else {
-				for {
-					// receive arp response
-					response, receiveTime, err := sock.receive()
-					if err != nil {
-						if err.Error() != "resource temporarily unavailable" && err.Error() != "interrupted system call" {
-							//verboseLog.Printf("error sock.receive: arping '%s' over interface: '%s' with address: '%s, err: %s'\n", dstIP, iface.Name, srcIP, err)
-							pingResultChan <- PingResult{nil, 0, err}
-							return
-						}
+		if sendTime, err := sock.send(request); err != nil {
+			verboseLog.Printf("error sock.send: arping '%s' over interface: '%s' with address: '%s, err: %s'\n", dstIP, iface.Name, srcIP, err)
 
-					} else {
-						if response.IsResponseOf(request) {
-							duration := receiveTime.Sub(sendTime)
-							verboseLog.Printf("OK:->process received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
-							pingResultChan <- PingResult{response.SenderMac(), duration, err}
-							return
-						}
-						//verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
+		} else {
+			for {
+				// receive arp response
+				response, receiveTime, err := sock.receive()
+				if err != nil {
+					if err.Error() != "resource temporarily unavailable" && err.Error() != "interrupted system call" {
+						//verboseLog.Printf("error sock.receive: arping '%s' over interface: '%s' with address: '%s, err: %s'\n", dstIP, iface.Name, srcIP, err)
+						pingResultChan <- PingResult{nil, 0, err}
+						return
 					}
-					//time.Sleep(20 * time.Nanosecond)
+
+				} else {
+					if response.IsResponseOf(request) {
+						duration := receiveTime.Sub(sendTime)
+						verboseLog.Printf("OK:->process received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
+						pingResultChan <- PingResult{response.SenderMac(), duration, err}
+						return
+					}
+					//verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
 				}
+				//time.Sleep(20 * time.Nanosecond)
 			}
 		}
+
 	}()
 
 	select {
