@@ -177,7 +177,6 @@ func (s *Server) startWorkers() {
 					}
 					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 					//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
-					//runtime.Gosched()
 				}
 			}
 		}(s.pingChan, i)
