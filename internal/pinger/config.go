@@ -2,10 +2,10 @@ package pinger
 
 const (
 	timesToRetry         = 3
-	arpNanoSecDelay      = 20
-	concurrentMax        = 256
+	arpNanoSecDelay      = 10
+	concurrentMax        = 128
 	concurrentDefault    = 16
-	jobChanLen           = 4096
+	jobChanLen           = 1024
 	restartIntervalMin   = 5
 	fileStoreNameDefault = "store.txt"
 )
