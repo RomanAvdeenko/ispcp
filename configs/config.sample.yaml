@@ -2,9 +2,9 @@ exclude-ifaces:
   - lo*
   - bond*
   - wg*
-exclude-networks:
-  [ 10.3.* ]
-threads: 32
-restart-interval: 120
-db-uri: "ispcsroute:passwoowd@tcp(10.2.1.20)/billing-dev"
+exclude-networks: [10.3.*]
+threads: 8
+restart-interval: 180
+dsn: "ispcsroute:pass@tcp(10.2.1.20)/billing?parseTime=True&loc=Europe%2FKiev&charset=utf8"
 file-store-name: "store.txt"
+store: "mysql"

@@ -25,7 +25,11 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var st store.Store
+var (
+	f  *os.File
+	db *sql.DB
+	st store.Store
+)
 
 type Server struct {
 	conifg   *Config
@@ -53,42 +57,40 @@ func newServer(cfg *Config, store store.Store) *Server {
 func init() {
 	//arping.SetTimeout(100 * time.Millisecond)
 	//arping.EnableVerboseLog()
-
 }
 
-func selectStoreType(cfg *Config) error {
+func selectStoreType(cfg *Config, f *os.File, db *sql.DB) error {
+	var err error
 	if cfg.StoreType == "mysql" {
 		// // Mysql store
-		db, err := sql.Open("mysql", cfg.URI)
+		db, err = sql.Open("mysql", cfg.URI)
 		if err != nil {
 			fmt.Println("err: ", err)
 			return err
 		}
-		defer db.Close()
 
-		if err := db.Ping(); err != nil {
+		if err = db.Ping(); err != nil {
 			fmt.Println("err: ", err)
 			return err
 		}
-
 		st = mysql.New(db)
 	} else {
 		// File store
-		f, err := os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, err = os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return err
 		}
-		defer f.Close()
-
 		st = file.New(f)
 	}
 	return nil
 }
 
 func Start(cfg *Config) error {
-	if err := selectStoreType(cfg); err != nil {
+	if err := selectStoreType(cfg, f, db); err != nil {
 		return err
 	}
+	defer db.Close()
+	defer f.Close()
 
 	s := newServer(cfg, st)
 
