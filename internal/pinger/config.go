@@ -16,7 +16,7 @@ type Config struct {
 	ThreadsNumber     int      `yaml:"threads"`
 	RestartInterval   int      `yaml:"restart-interval"`
 	URI               string   `yaml:"dsn"`
-	StoreType         string   `yanl:"store"`
+	StoreType         string   `yaml:"store"`
 	FileStoreName     string   `yaml:"file-store-name""`
 }
 
