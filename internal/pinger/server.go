@@ -3,7 +3,6 @@ package pinger
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
 
 	"ispcp/internal/host"
 	"ispcp/internal/model"
@@ -177,20 +176,22 @@ func (s *Server) startWorkers() {
 			defer time.Sleep(arpNanoSecDelay * time.Nanosecond)
 
 			for ping := range pingChan {
-				var alive bool
-				for c := 0; c < timesToRetry; c++ {
+				for c := 1; c < timesToRetry+1; c++ {
 					MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
 					if err != nil {
 						if err != arping.ErrTimeout {
 							// Try resend
-							s.logger.Debug().Msg(ping.IP.String() + " need to send again " + strconv.Itoa(c))
+							s.logger.Debug().Msg(fmt.Sprintf("Need to resend arp to %s. Try # %v of %v.", ping.IP, c, timesToRetry))
 							time.Sleep(arpNanoSecDelay * time.Nanosecond)
 							continue
 						}
+						pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
+						s.pongs.Store(pong)
+
 						break
 					} else {
-						alive = true
-						pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: alive}
+
+						pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
 						s.pongs.Store(pong)
 						break
 					}
