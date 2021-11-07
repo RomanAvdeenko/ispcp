@@ -2,6 +2,7 @@ package pinger
 
 import (
 	"fmt"
+	"strconv"
 
 	"ispcp/internal/host"
 	"ispcp/internal/model"
@@ -164,7 +165,7 @@ func (s *Server) startWorkers() {
 					if err != nil {
 						if err != arping.ErrTimeout {
 							// Try resend
-							//s.logger.Error().Msg(ping.IP.String() + " need to send again " + strconv.Itoa(c))
+							s.logger.Error().Msg(ping.IP.String() + " need to send again " + strconv.Itoa(c))
 							time.Sleep(arpNanoSecDelay * time.Nanosecond)
 							continue
 						}
