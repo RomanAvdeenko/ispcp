@@ -165,7 +165,7 @@ func (s *Server) startWorkers() {
 					if err != nil {
 						if err != arping.ErrTimeout {
 							// Try resend
-							s.logger.Info().Msg(ping.IP.String() + " need to send again " + strconv.Itoa(c))
+							s.logger.Debug().Msg(ping.IP.String() + " need to send again " + strconv.Itoa(c))
 							time.Sleep(arpNanoSecDelay * time.Nanosecond)
 							continue
 						}
