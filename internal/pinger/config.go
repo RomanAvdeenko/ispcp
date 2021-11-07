@@ -2,7 +2,7 @@ package pinger
 
 const (
 	timesToRetry         = 3
-	arpNanoSecDelay      = 10
+	arpNanoSecDelay      = 40
 	concurrentMax        = 128
 	concurrentDefault    = 16
 	jobChanLen           = 1024
