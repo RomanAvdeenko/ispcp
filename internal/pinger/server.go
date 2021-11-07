@@ -1,6 +1,7 @@
 package pinger
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
 
@@ -8,6 +9,7 @@ import (
 	"ispcp/internal/model"
 	"ispcp/internal/store"
 	"ispcp/internal/store/file"
+	"ispcp/internal/store/mysql"
 	"os"
 	"time"
 
@@ -22,6 +24,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 )
+
+var st store.Store
 
 type Server struct {
 	conifg   *Config
@@ -46,40 +50,52 @@ func newServer(cfg *Config, store store.Store) *Server {
 	s.configure()
 	return &s
 }
-
-func Start(cfg *Config) error {
+func init() {
 	//arping.SetTimeout(100 * time.Millisecond)
 	//arping.EnableVerboseLog()
 
-	// File store
-	f, err := os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
+}
+
+func selectStoreType(cfg *Config) error {
+	if cfg.StoreType == "mysql" {
+		// // Mysql store
+		db, err := sql.Open("mysql", cfg.URI)
+		if err != nil {
+			fmt.Println("err: ", err)
+			return err
+		}
+		defer db.Close()
+
+		if err := db.Ping(); err != nil {
+			fmt.Println("err: ", err)
+			return err
+		}
+
+		st = mysql.New(db)
+	} else {
+		// File store
+		f, err := os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		st = file.New(f)
+	}
+	return nil
+}
+
+func Start(cfg *Config) error {
+	if err := selectStoreType(cfg); err != nil {
 		return err
 	}
-	defer f.Close()
 
-	store := file.New(f)
-
-	// // Mysql store
-	// db, err := sql.Open("mysql", cfg.URI)
-	// if err != nil {
-	// 	fmt.Println("err: ", err)
-	// 	return err
-	// }
-	// defer db.Close()
-
-	// if err := db.Ping(); err != nil {
-	// 	fmt.Println("err: ", err)
-	// 	return err
-	// }
-
-	// store := mysql.New(db)
-	s := newServer(cfg, store)
+	s := newServer(cfg, st)
 
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
 	refreshTicker := time.NewTicker(refreshInterval)
 
-	s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s...", s.conifg.ThreadsNumber, refreshInterval))
+	s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s, store type: %s", s.conifg.ThreadsNumber, refreshInterval, s.conifg.StoreType))
 
 	go func() {
 		// Start working instantly

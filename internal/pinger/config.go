@@ -16,6 +16,7 @@ type Config struct {
 	ThreadsNumber     int      `yaml:"threads"`
 	RestartInterval   int      `yaml:"restart-interval"`
 	URI               string   `yaml:"dsn"`
+	StoreType         string   `yanl:"store"`
 	FileStoreName     string   `yaml:"file-store-name""`
 }
 
@@ -36,5 +37,8 @@ func (cfg *Config) Correct() {
 	}
 	if cfg.FileStoreName == "" {
 		cfg.FileStoreName = fileStoreNameDefault
+	}
+	if cfg.StoreType == "" {
+		cfg.StoreType = "file"
 	}
 }
