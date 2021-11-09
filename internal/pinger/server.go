@@ -183,9 +183,7 @@ func (s *Server) startWorkers() {
 	//for i := 0; i < s.conifg.ThreadsNumber; i++ {
 	// Start workers
 	// go func()...
-	func(pingChan chan model.Ping, num int) {
-		defer time.Sleep(arpNanoSecDelay * time.Nanosecond)
-
+	go func(pingChan chan model.Ping, num int) {
 		for ping := range pingChan {
 			for c := 1; c < timesToRetry+1; c++ {
 				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
