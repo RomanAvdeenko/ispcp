@@ -159,7 +159,7 @@ func (s *Server) configureLogger() {
 
 // Adds work to ping all required host interfaces
 func (s *Server) addWork() {
-	go func() {
+	go func(ch chan<- model.Ping) {
 		defer s.logger.Debug().Msg("Adding work  done")
 
 		s.logger.Debug().Msg("Starting to add work.")
@@ -177,20 +177,20 @@ func (s *Server) addWork() {
 					for _, ip := range ips {
 						pingChan <- model.Ping{IP: ip, Iface: iface}
 					}
-				}(iface, ifaceAddr, s.pingChan)
+				}(iface, ifaceAddr, ch)
 			}
 		}
-	}()
+	}(s.pingChan)
 }
 
 func (s *Server) startWorkers() {
 	// Bug!!! Only one
 	//for i := 0; i < s.conifg.ThreadsNumber; i++ {
 	// Start workers
-	go func(pingChan <-chan model.Ping, num int) {
+	go func(ch <-chan model.Ping, num int) {
 		defer s.logger.Debug().Msg("Worker done")
 
-		for ping := range pingChan {
+		for ping := range ch {
 			for c := 1; c < timesToRetry+1; c++ {
 				s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s.", ping.Iface.Name, ping.IP))
 				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
