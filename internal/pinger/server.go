@@ -147,6 +147,8 @@ func (s *Server) configureLogger() {
 	switch s.conifg.LoggingLevel {
 	case "DEBUG":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "TRACE":
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	case "ERROR":
 		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
 	default:
@@ -185,6 +187,7 @@ func (s *Server) startWorkers() {
 	go func(pingChan chan model.Ping, num int) {
 		for ping := range pingChan {
 			for c := 1; c < timesToRetry+1; c++ {
+				s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s.", ping.Iface.Name, ping.IP))
 				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
 				if err != nil {
 					if err != arping.ErrTimeout {
@@ -193,16 +196,16 @@ func (s *Server) startWorkers() {
 						time.Sleep(arpNanoSecDelay * time.Nanosecond)
 						continue
 					}
+					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: timeout.", ping.Iface.Name, ping.IP))
 					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
 					s.pongs.Store(pong)
 					break
 				} else {
-
+					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", ping.Iface.Name, ping.IP))
 					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
 					s.pongs.Store(pong)
 					break
 				}
-				//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 			}
 		}
