@@ -109,6 +109,7 @@ func Start(cfg *Config) error {
 			case <-refreshTicker.C:
 				// Check completion for previous work
 				if len(s.pingChan) == 0 {
+					s.logger.Info().Msg("Write to store")
 					err := s.store.Store(s.pongs)
 					if err != nil {
 						s.logger.Error().Msg("Store error: " + err.Error())
@@ -198,7 +199,6 @@ func (s *Server) startWorkers() {
 					}
 					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: timeout.", ping.Iface.Name, ping.IP))
 					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
-					s.logger.Info().Msg("Write to store")
 					s.pongs.Store(pong)
 					break
 				} else {
