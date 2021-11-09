@@ -198,6 +198,7 @@ func (s *Server) startWorkers() {
 					}
 					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: timeout.", ping.Iface.Name, ping.IP))
 					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
+					s.logger.Info().Msg("Write to store")
 					s.pongs.Store(pong)
 					break
 				} else {

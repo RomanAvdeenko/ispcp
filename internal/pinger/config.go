@@ -6,7 +6,7 @@ const (
 	// concurrentMax        = 128
 	// concurrentDefault    = 16
 	jobChanLen           = 1024
-	restartIntervalMin   = 5
+	restartIntervalMin   = 10
 	fileStoreNameDefault = "store.txt"
 )
 
