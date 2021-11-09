@@ -159,26 +159,27 @@ func (s *Server) configureLogger() {
 }
 
 // Adds work to ping all required host interfaces
-func (s *Server) addWork() error {
-	s.logger.Debug().Msg("Starting to add work.")
-	//Let's walk through the interfaces
-	for _, iface := range s.host.ProcessedIfaces {
-		ifaceAddrs, err := s.host.GetIfaceAddrs(iface)
-		if err != nil {
-			return err
+func (s *Server) addWork() {
+	go func() {
+		s.logger.Debug().Msg("Starting to add work.")
+		//Let's walk through the interfaces
+		for _, iface := range s.host.ProcessedIfaces {
+			ifaceAddrs, err := s.host.GetIfaceAddrs(iface)
+			if err != nil {
+				s.logger.Error().Msg(err.Error())
+			}
+			for _, ifaceAddr := range ifaceAddrs {
+				// Add job to workers
+				func(iface net.Interface, addr string, pingChan chan<- model.Ping) {
+					s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
+					ips, _ := mynet.GetHostsIP(addr)
+					for _, ip := range ips {
+						pingChan <- model.Ping{IP: ip, Iface: iface}
+					}
+				}(iface, ifaceAddr, s.pingChan)
+			}
 		}
-		for _, ifaceAddr := range ifaceAddrs {
-			// Add job to workers
-			func(iface net.Interface, addr string, pingChan chan<- model.Ping) {
-				s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
-				ips, _ := mynet.GetHostsIP(addr)
-				for _, ip := range ips {
-					pingChan <- model.Ping{IP: ip, Iface: iface}
-				}
-			}(iface, ifaceAddr, s.pingChan)
-		}
-	}
-	return nil
+	}()
 }
 
 func (s *Server) startWorkers() {
