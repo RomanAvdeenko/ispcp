@@ -1,10 +1,10 @@
 package pinger
 
 const (
-	timesToRetry         = 3
-	arpNanoSecDelay      = 40
-	concurrentMax        = 128
-	concurrentDefault    = 16
+	timesToRetry    = 3
+	arpNanoSecDelay = 40
+	// concurrentMax        = 128
+	// concurrentDefault    = 16
 	jobChanLen           = 1024
 	restartIntervalMin   = 5
 	fileStoreNameDefault = "store.txt"
@@ -13,11 +13,11 @@ const (
 type Config struct {
 	ExcludeIfaceNames []string `yaml:"exclude-ifaces"`
 	ExcludeNetIPs     []string `yaml:"exclude-networks"`
-	ThreadsNumber     int      `yaml:"threads"`
-	RestartInterval   int      `yaml:"restart-interval"`
-	URI               string   `yaml:"dsn"`
-	StoreType         string   `yaml:"store"`
-	FileStoreName     string   `yaml:"file-store-name""`
+	//	ThreadsNumber     int      `yaml:"threads"`
+	RestartInterval int    `yaml:"restart-interval"`
+	URI             string `yaml:"dsn"`
+	StoreType       string `yaml:"store"`
+	FileStoreName   string `yaml:"file-store-name""`
 }
 
 func NewConfig() *Config {
@@ -25,12 +25,12 @@ func NewConfig() *Config {
 }
 
 func (cfg *Config) Correct() {
-	switch {
-	case cfg.ThreadsNumber > concurrentMax:
-		cfg.ThreadsNumber = concurrentMax
-	case cfg.ThreadsNumber == 0:
-		cfg.ThreadsNumber = concurrentDefault
-	}
+	// switch {
+	// case cfg.ThreadsNumber > concurrentMax:
+	// 	cfg.ThreadsNumber = concurrentMax
+	// case cfg.ThreadsNumber == 0:
+	// 	cfg.ThreadsNumber = concurrentDefault
+	// }
 
 	if cfg.RestartInterval < restartIntervalMin {
 		cfg.RestartInterval = restartIntervalMin

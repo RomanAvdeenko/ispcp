@@ -54,7 +54,7 @@ func newServer(cfg *Config, store store.Store) *Server {
 	return &s
 }
 func init() {
-	arping.SetTimeout(50 * time.Millisecond)
+	arping.SetTimeout(10 * time.Millisecond)
 	//arping.EnableVerboseLog()
 }
 
@@ -96,7 +96,8 @@ func Start(cfg *Config) error {
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
 	refreshTicker := time.NewTicker(refreshInterval)
 
-	s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s, store type: %s", s.conifg.ThreadsNumber, refreshInterval, s.conifg.StoreType))
+	//s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s, store type: %s", s.conifg.ThreadsNumber, refreshInterval, s.conifg.StoreType))
+	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, store type: %s", refreshInterval, s.conifg.StoreType))
 
 	go func() {
 		// Start working instantly
@@ -170,35 +171,35 @@ func (s *Server) addWork() error {
 }
 
 func (s *Server) startWorkers() {
-	for i := 0; i < s.conifg.ThreadsNumber; i++ {
-		// Start workers
-		go func(pingChan chan model.Ping, num int) {
-			defer time.Sleep(arpNanoSecDelay * time.Nanosecond)
+	// Bug!!! Only one
+	//for i := 0; i < s.conifg.ThreadsNumber; i++ {
+	// Start workers
+	go func(pingChan chan model.Ping, num int) {
+		defer time.Sleep(arpNanoSecDelay * time.Nanosecond)
 
-			for ping := range pingChan {
-				for c := 1; c < timesToRetry+1; c++ {
-					MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
-					if err != nil {
-						if err != arping.ErrTimeout {
-							// Try resend
-							s.logger.Debug().Msg(fmt.Sprintf("Need to resend arp to %s. Try # %v of %v.", ping.IP, c, timesToRetry))
-							time.Sleep(arpNanoSecDelay * time.Nanosecond)
-							continue
-						}
-						pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
-						s.pongs.Store(pong)
-
-						break
-					} else {
-
-						pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
-						s.pongs.Store(pong)
-						break
+		for ping := range pingChan {
+			for c := 1; c < timesToRetry+1; c++ {
+				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
+				if err != nil {
+					if err != arping.ErrTimeout {
+						// Try resend
+						s.logger.Debug().Msg(fmt.Sprintf("Need to resend arp to %s. Try # %v of %v.", ping.IP, c, timesToRetry))
+						time.Sleep(arpNanoSecDelay * time.Nanosecond)
+						continue
 					}
-					//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
-					//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
+					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
+					s.pongs.Store(pong)
+					break
+				} else {
+
+					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
+					s.pongs.Store(pong)
+					break
 				}
+				//s.logger.Printf("%s,\t%s,\t%s,\t\t%s", ping.Iface.Name, ping.IP, "OK", "")
+				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 			}
-		}(s.pingChan, i)
-	}
+		}
+	}(s.pingChan, 0)
+	//	}
 }
