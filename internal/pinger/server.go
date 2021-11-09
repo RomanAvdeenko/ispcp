@@ -118,7 +118,7 @@ func Start(cfg *Config) error {
 					s.addWork()
 					s.startWorkers()
 				} else {
-					s.logger.Warn().Msg("Check completion of previous work. Previous work has not been completed. Skip.")
+					s.logger.Warn().Msg(fmt.Sprintf("Previous work has not been completed (%v IPs). Skip...", s.pingChan))
 				}
 			}
 		}
