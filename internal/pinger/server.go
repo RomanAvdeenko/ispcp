@@ -182,7 +182,6 @@ func (s *Server) startWorkers() {
 	// Bug!!! Only one
 	//for i := 0; i < s.conifg.ThreadsNumber; i++ {
 	// Start workers
-	// go func()...
 	go func(pingChan chan model.Ping, num int) {
 		for ping := range pingChan {
 			for c := 1; c < timesToRetry+1; c++ {
