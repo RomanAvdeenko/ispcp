@@ -97,7 +97,7 @@ func Start(cfg *Config) error {
 	refreshTicker := time.NewTicker(refreshInterval)
 
 	//s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s, store type: %s", s.conifg.ThreadsNumber, refreshInterval, s.conifg.StoreType))
-	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, store type: %s", refreshInterval, s.conifg.StoreType))
+	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, store type: %s, logging level: %s", refreshInterval, s.conifg.StoreType, s.conifg.LoggingLevel))
 
 	go func() {
 		// Start working instantly
@@ -144,7 +144,15 @@ func (s *Server) configure() error {
 
 func (s *Server) configureLogger() {
 	*s.logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Stamp})
-	s.logger.Level(zerolog.DebugLevel)
+	switch s.conifg.LoggingLevel {
+	case "DEBUG":
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	case "ERROR":
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	default:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
 }
 
 // Adds work to ping all required host interfaces
@@ -174,7 +182,8 @@ func (s *Server) startWorkers() {
 	// Bug!!! Only one
 	//for i := 0; i < s.conifg.ThreadsNumber; i++ {
 	// Start workers
-	go func(pingChan chan model.Ping, num int) {
+	// go func()...
+	func(pingChan chan model.Ping, num int) {
 		defer time.Sleep(arpNanoSecDelay * time.Nanosecond)
 
 		for ping := range pingChan {

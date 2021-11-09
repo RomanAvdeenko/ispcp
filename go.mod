@@ -3,10 +3,10 @@ module ispcp
 go 1.17
 
 require (
-	github.com/RomanAvdeenko/arping v1.0.3
 	github.com/RomanAvdeenko/utils v1.1.3
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.2.5
+	github.com/j-keck/arping v1.0.2
 	github.com/rs/zerolog v1.25.0
 	github.com/stretchr/testify v1.7.0
 )
@@ -14,7 +14,6 @@ require (
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/j-keck/arping v1.0.2 // indirect
 	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

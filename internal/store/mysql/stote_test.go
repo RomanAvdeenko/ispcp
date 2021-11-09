@@ -1,8 +1,8 @@
 package mysql_test
 
 import (
-	"alive/internal/model"
-	"alive/internal/store/mysql"
+	"ispcp/internal/model"
+	"ispcp/internal/store/mysql"
 	"os"
 	"testing"
 
@@ -26,5 +26,4 @@ func TestAdd(t *testing.T) {
 
 	r := model.TestCheckHostRecord(t)
 	assert.NoError(t, store.Add(r))
-
 }

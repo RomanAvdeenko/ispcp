@@ -17,7 +17,8 @@ type Config struct {
 	RestartInterval int    `yaml:"restart-interval"`
 	URI             string `yaml:"dsn"`
 	StoreType       string `yaml:"store"`
-	FileStoreName   string `yaml:"file-store-name""`
+	FileStoreName   string `yaml:"file-store-name"`
+	LoggingLevel    string `yaml:"log-level"`
 }
 
 func NewConfig() *Config {
@@ -40,5 +41,8 @@ func (cfg *Config) Correct() {
 	}
 	if cfg.StoreType == "" {
 		cfg.StoreType = "file"
+	}
+	if cfg.LoggingLevel == "" {
+		cfg.LoggingLevel = "INFO"
 	}
 }
