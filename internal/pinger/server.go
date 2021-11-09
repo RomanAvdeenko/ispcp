@@ -117,7 +117,6 @@ func Start(cfg *Config) error {
 					}
 					s.pongs.Clear()
 					s.addWork()
-					s.startWorkers()
 				} else {
 					s.logger.Warn().Msg(fmt.Sprintf("Previous work has not been completed (%v IPs). Skip...", len(s.pingChan)))
 				}
@@ -161,6 +160,8 @@ func (s *Server) configureLogger() {
 // Adds work to ping all required host interfaces
 func (s *Server) addWork() {
 	go func() {
+		defer s.logger.Debug().Msg("Adding work  done")
+
 		s.logger.Debug().Msg("Starting to add work.")
 		//Let's walk through the interfaces
 		for _, iface := range s.host.ProcessedIfaces {
@@ -186,7 +187,9 @@ func (s *Server) startWorkers() {
 	// Bug!!! Only one
 	//for i := 0; i < s.conifg.ThreadsNumber; i++ {
 	// Start workers
-	go func(pingChan chan model.Ping, num int) {
+	go func(pingChan <-chan model.Ping, num int) {
+		defer s.logger.Debug().Msg("Worker done")
+
 		for ping := range pingChan {
 			for c := 1; c < timesToRetry+1; c++ {
 				s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s.", ping.Iface.Name, ping.IP))
