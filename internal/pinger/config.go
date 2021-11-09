@@ -5,7 +5,7 @@ const (
 	arpNanoSecDelay = 40
 	// concurrentMax        = 128
 	// concurrentDefault    = 16
-	jobChanLen           = 1024
+	jobChanLen           = 1
 	restartIntervalMin   = 10
 	fileStoreNameDefault = "store.txt"
 )
