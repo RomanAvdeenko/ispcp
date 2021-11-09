@@ -169,7 +169,7 @@ func (s *Server) addWork() error {
 		}
 		for _, ifaceAddr := range ifaceAddrs {
 			// Add job to workers
-			go func(iface net.Interface, addr string, pingChan chan<- model.Ping) {
+			func(iface net.Interface, addr string, pingChan chan<- model.Ping) {
 				s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
 				ips, _ := mynet.GetHostsIP(addr)
 				for _, ip := range ips {
