@@ -176,10 +176,10 @@ func (s *Server) addWork() {
 					s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
 					ips, err := mynet.GetHostsIP(addr)
 					if err != nil {
-						s.logger.Error().Msg("mynet.GetHostsIP " + err.Error())
+						s.logger.Error().Msg("mynet.GetHostsIP(): " + err.Error())
 						return
 					}
-					s.logger.Trace().Msg(fmt.Sprintf("Added %v IP", len(ips)))
+					s.logger.Debug().Msg(fmt.Sprintf("Added %v IP", len(ips)))
 					for _, ip := range ips {
 						ch <- model.Ping{IP: ip, Iface: iface}
 					}
