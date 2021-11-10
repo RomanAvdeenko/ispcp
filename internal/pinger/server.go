@@ -188,7 +188,7 @@ func (s *Server) startWorkers() {
 	//for i := 0; i < s.conifg.ThreadsNumber; i++ {
 	// Start workers
 	go func(ch <-chan model.Ping, num int) {
-		defer s.logger.Debug().Msg("Worker done")
+		defer s.logger.Error().Msg("Worker done")
 
 		for ping := range ch {
 			for c := 1; c < timesToRetry+1; c++ {
