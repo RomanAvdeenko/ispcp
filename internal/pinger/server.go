@@ -109,13 +109,13 @@ func Start(cfg *Config) error {
 			case <-refreshTicker.C:
 				// Check completion for previous work
 				if len(s.pingChan) == 0 {
-					// s.logger.Info().Msg("Write to store")
-					// err := s.store.Store(s.pongs)
-					// if err != nil {
-					// 	s.logger.Error().Msg("Store error: " + err.Error())
-					// 	continue
-					// }
-					// s.pongs.Clear()
+					s.logger.Info().Msg("Write to store")
+					err := s.store.Store(s.pongs)
+					if err != nil {
+						s.logger.Error().Msg("Store error: " + err.Error())
+						continue
+					}
+					s.pongs.Clear()
 					s.addWork()
 				} else {
 					s.logger.Warn().Msg(fmt.Sprintf("Previous work has not been completed (%v IPs). Skip...", len(s.pingChan)))
@@ -175,17 +175,12 @@ func (s *Server) addWork() {
 				func(iface net.Interface, addr string, ch chan<- model.Ping) {
 					s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
 					ips, err := mynet.GetHostsIP(addr)
-					//s.logger.Debug().Msg(fmt.Sprintf("1!!!Added %v IPs", len(ips)))
 					if err != nil {
-						s.logger.Error().Msg("mynet.GetHostsIP(): " + err.Error())
+						s.logger.Error().Msg("mynet.GetHostsIP " + err.Error())
 						return
 					}
-					//s.logger.Debug().Msg(fmt.Sprintf("2!!!Added %v IPs", len(ips)))
 					for _, ip := range ips {
-						val := model.Ping{IP: ip, Iface: iface}
-						s.logger.Debug().Msg(fmt.Sprintf("Before: put to ch val %v: ", val))
-						ch <- val
-						s.logger.Debug().Msg(fmt.Sprintf("Aftere: put to ch val %v: ", val))
+						ch <- model.Ping{IP: ip, Iface: iface}
 					}
 				}(iface, ifaceAddr, ch)
 			}
@@ -203,8 +198,7 @@ func (s *Server) startWorkers() {
 		for ping := range ch {
 			for c := 1; c < timesToRetry+1; c++ {
 				s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s.", ping.Iface.Name, ping.IP))
-				//MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
-				_, _, err := arping.PingOverIface(ping.IP, ping.Iface)
+				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
 				if err != nil {
 					if err != arping.ErrTimeout {
 						// Try resend
@@ -213,13 +207,13 @@ func (s *Server) startWorkers() {
 						continue
 					}
 					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: timeout.", ping.Iface.Name, ping.IP))
-					//pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
-					//s.pongs.Store(pong)
+					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
+					s.pongs.Store(pong)
 					break
 				} else {
 					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", ping.Iface.Name, ping.IP))
-					//pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
-					//s.pongs.Store(pong)
+					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
+					s.pongs.Store(pong)
 					break
 				}
 				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
