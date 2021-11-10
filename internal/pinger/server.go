@@ -167,16 +167,20 @@ func (s *Server) addWork() {
 		for _, iface := range s.host.ProcessedIfaces {
 			ifaceAddrs, err := s.host.GetIfaceAddrs(iface)
 			if err != nil {
-				s.logger.Error().Msg("error: addWork(): " + err.Error())
-				return
+				s.logger.Error().Msg("addWork(): " + err.Error())
+				continue
 			}
 			for _, ifaceAddr := range ifaceAddrs {
 				// Add job to workers
-				func(iface net.Interface, addr string, pingChan chan<- model.Ping) {
+				func(iface net.Interface, addr string, ch chan<- model.Ping) {
 					s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
-					ips, _ := mynet.GetHostsIP(addr)
+					ips, err := mynet.GetHostsIP(addr)
+					if err != nil {
+						s.logger.Error().Msg("mynet.GetHostsIP " + err.Error())
+						return
+					}
 					for _, ip := range ips {
-						pingChan <- model.Ping{IP: ip, Iface: iface}
+						ch <- model.Ping{IP: ip, Iface: iface}
 					}
 				}(iface, ifaceAddr, ch)
 			}
