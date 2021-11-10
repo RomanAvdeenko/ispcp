@@ -167,7 +167,8 @@ func (s *Server) addWork() {
 		for _, iface := range s.host.ProcessedIfaces {
 			ifaceAddrs, err := s.host.GetIfaceAddrs(iface)
 			if err != nil {
-				s.logger.Error().Msg(err.Error())
+				s.logger.Error().Msg("error: addWork(): " + err.Error())
+				return
 			}
 			for _, ifaceAddr := range ifaceAddrs {
 				// Add job to workers
