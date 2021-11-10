@@ -179,6 +179,7 @@ func (s *Server) addWork() {
 						s.logger.Error().Msg("mynet.GetHostsIP " + err.Error())
 						return
 					}
+					s.logger.Trace().Msg(fmt.Sprintf("Added %v IP", len(ips)))
 					for _, ip := range ips {
 						ch <- model.Ping{IP: ip, Iface: iface}
 					}
