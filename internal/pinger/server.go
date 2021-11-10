@@ -215,12 +215,12 @@ func (s *Server) startWorkers() {
 				s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: timeout.", ping.Iface.Name, ping.IP))
 				pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
 				s.pongs.Store(pong)
-				break
+				//break
 			} else {
 				s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", ping.Iface.Name, ping.IP))
 				pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
 				s.pongs.Store(pong)
-				break
+				//break
 			}
 			//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
 		}
