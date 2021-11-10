@@ -28,7 +28,7 @@ type Pongs struct {
 }
 
 func NewPongs() *Pongs {
-	return &Pongs{pong: make([]Pong, 0, 32)}
+	return &Pongs{pong: make([]Pong, 0)}
 }
 
 func (p *Pongs) Len() int {
@@ -36,10 +36,11 @@ func (p *Pongs) Len() int {
 }
 
 func (p *Pongs) Store(val *Pong) {
-	p.Lock()
-	defer p.Unlock()
+	//defer p.Unlock()
 
+	p.Lock()
 	p.pong = append(p.pong, *val)
+	p.Unlock()
 }
 
 func (p *Pongs) LoadAll() *[]Pong {
@@ -54,11 +55,12 @@ func (p *Pongs) LoadAll() *[]Pong {
 }
 
 func (p *Pongs) Clear() {
-	p.Lock()
-	defer p.Unlock()
+	//	defer p.Unlock()
 
+	p.Lock()
 	//p.pong = p.pong[:0]
 	p.pong = nil
+	p.Unlock()
 }
 
 // Pong human friendly view implementation
