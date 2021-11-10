@@ -175,14 +175,17 @@ func (s *Server) addWork() {
 				func(iface net.Interface, addr string, ch chan<- model.Ping) {
 					s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
 					ips, err := mynet.GetHostsIP(addr)
-					s.logger.Debug().Msg(fmt.Sprintf("1!!!Added %v IPs", len(ips)))
+					//s.logger.Debug().Msg(fmt.Sprintf("1!!!Added %v IPs", len(ips)))
 					if err != nil {
 						s.logger.Error().Msg("mynet.GetHostsIP(): " + err.Error())
 						return
 					}
-					s.logger.Debug().Msg(fmt.Sprintf("2!!!Added %v IPs", len(ips)))
+					//s.logger.Debug().Msg(fmt.Sprintf("2!!!Added %v IPs", len(ips)))
 					for _, ip := range ips {
-						ch <- model.Ping{IP: ip, Iface: iface}
+						val := model.Ping{IP: ip, Iface: iface}
+						s.logger.Debug().Msg(fmt.Sprintf("Before: put to ch val %v: ", val))
+						ch <- val
+						s.logger.Debug().Msg(fmt.Sprintf("After: put to ch val %v: ", val))
 					}
 				}(iface, ifaceAddr, ch)
 			}
