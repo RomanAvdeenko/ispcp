@@ -180,6 +180,7 @@ func (s *Server) addWork() {
 						return
 					}
 					for _, ip := range ips {
+						s.logger.Debug().Msg("put: " + ip.String())
 						ch <- model.Ping{IP: ip, Iface: iface}
 					}
 				}(iface, ifaceAddr, ch)
@@ -196,6 +197,7 @@ func (s *Server) startWorkers() {
 		defer s.logger.Error().Msg("Worker done")
 
 		for ping := range ch {
+			s.logger.Debug().Msg("receive: " + ping.IP.String())
 			for c := 1; c < timesToRetry+1; c++ {
 				s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s.", ping.Iface.Name, ping.IP))
 				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
