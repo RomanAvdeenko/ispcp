@@ -3,7 +3,6 @@ package model
 import (
 	"fmt"
 	"net"
-	"sync"
 	"time"
 )
 
@@ -23,7 +22,7 @@ type Pong struct {
 }
 
 type Pongs struct {
-	sync.RWMutex
+	//sync.RWMutex
 	pong []Pong
 }
 
@@ -38,9 +37,9 @@ func (p *Pongs) Len() int {
 func (p *Pongs) Store(val *Pong) {
 	//defer p.Unlock()
 
-	p.Lock()
+	//p.Lock()
 	p.pong = append(p.pong, *val)
-	p.Unlock()
+	//p.Unlock()
 }
 
 func (p *Pongs) LoadAll() *[]Pong {
@@ -57,10 +56,10 @@ func (p *Pongs) LoadAll() *[]Pong {
 func (p *Pongs) Clear() {
 	//	defer p.Unlock()
 
-	p.Lock()
+	//	p.Lock()
 	//p.pong = p.pong[:0]
 	p.pong = nil
-	p.Unlock()
+	//	p.Unlock()
 }
 
 // Pong human friendly view implementation
