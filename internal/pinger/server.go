@@ -98,7 +98,7 @@ func Start(cfg *Config) error {
 
 	go func() {
 		// Start working instantly
-		s.Do()
+		go s.Do()
 		for {
 			select {
 			case <-refreshTicker.C:
@@ -110,7 +110,7 @@ func Start(cfg *Config) error {
 						continue
 					}
 					s.pongs.Clear()
-					s.Do()
+					go s.Do()
 				} else {
 					s.logger.Warn().Msg("Can't start/ Previouswork isn't finished!")
 				}
