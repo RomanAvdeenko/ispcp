@@ -47,7 +47,7 @@ func newServer(cfg *Config, store store.Store) *Server {
 		//logger: &zerolog.New(os.Stdout),
 		logger:   &zerolog.Logger{},
 		host:     host.NewHost(),
-		pingChan: make(chan model.Ping, jobChanLen),
+		pingChan: make(chan model.Ping, 0),
 		pongs:    model.NewPongs(),
 	}
 	s.configure()
