@@ -109,13 +109,13 @@ func Start(cfg *Config) error {
 			case <-refreshTicker.C:
 				// Check completion for previous work
 				if len(s.pingChan) == 0 {
-					s.logger.Info().Msg("Write to store")
-					err := s.store.Store(s.pongs)
-					if err != nil {
-						s.logger.Error().Msg("Store error: " + err.Error())
-						continue
-					}
-					s.pongs.Clear()
+					// s.logger.Info().Msg("Write to store")
+					// err := s.store.Store(s.pongs)
+					// if err != nil {
+					// 	s.logger.Error().Msg("Store error: " + err.Error())
+					// 	continue
+					// }
+					// s.pongs.Clear()
 					go s.addWork()
 				} else {
 					s.logger.Warn().Msg(fmt.Sprintf("Previous work has not been completed (%v IPs). Skip...", len(s.pingChan)))
