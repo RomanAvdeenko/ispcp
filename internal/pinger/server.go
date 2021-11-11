@@ -35,6 +35,7 @@ type Server struct {
 	host     *host.Host
 	pongs    *model.Pongs
 	location *time.Location
+	run      bool
 }
 
 func newServer(cfg *Config, store store.Store) *Server {
@@ -101,15 +102,18 @@ func Start(cfg *Config) error {
 		for {
 			select {
 			case <-refreshTicker.C:
-
-				s.logger.Info().Msg("Write to store")
-				err := s.store.Store(s.pongs)
-				if err != nil {
-					s.logger.Error().Msg("Store error: " + err.Error())
-					continue
+				if !s.run {
+					s.logger.Info().Msg("Write to store")
+					err := s.store.Store(s.pongs)
+					if err != nil {
+						s.logger.Error().Msg("Store error: " + err.Error())
+						continue
+					}
+					s.pongs.Clear()
+					s.Do()
+				} else {
+					s.logger.Warn().Msg("Can't start/ Previouswork isn't finished!")
 				}
-				s.pongs.Clear()
-				s.Do()
 			}
 		}
 	}()
@@ -149,9 +153,13 @@ func (s *Server) configureLogger() {
 
 // Adds work to ipl required host interfaces
 func (s *Server) Do() {
-	defer s.logger.Debug().Msg("Work  done")
+	defer func() {
+		s.logger.Debug().Msg("Work  done")
+		s.run = false
+	}()
 
 	s.logger.Debug().Msg("Starting to add work.")
+	s.run = true
 	//Let's walk through the interfaces
 	for _, iface := range s.host.ProcessedIfaces {
 		ifaceAddrs, err := s.host.GetIfaceAddrs(iface)
