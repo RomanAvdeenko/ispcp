@@ -101,8 +101,8 @@ func Start(cfg *Config) error {
 
 	go func() {
 		// Start working instantly
-		s.addWork()
-		s.startWorkers()
+		go s.addWork()
+		go s.startWorkers()
 
 		for {
 			select {
@@ -116,7 +116,7 @@ func Start(cfg *Config) error {
 						continue
 					}
 					s.pongs.Clear()
-					s.addWork()
+					go s.addWork()
 				} else {
 					s.logger.Warn().Msg(fmt.Sprintf("Previous work has not been completed (%v IPs). Skip...", len(s.pingChan)))
 				}
@@ -159,7 +159,7 @@ func (s *Server) configureLogger() {
 
 // Adds work to ping all required host interfaces
 func (s *Server) addWork() {
-	go func(ch chan<- model.Ping) {
+	func(ch chan<- model.Ping) {
 		defer s.logger.Debug().Msg("Adding work  done")
 
 		s.logger.Debug().Msg("Starting to add work.")
@@ -193,33 +193,33 @@ func (s *Server) startWorkers() {
 	// Bug!!! Only one
 	//for i := 0; i < s.conifg.ThreadsNumber; i++ {
 	// Start workers
-	go func(ch <-chan model.Ping, num int) {
+	func(ch <-chan model.Ping, num int) {
 		defer s.logger.Error().Msg("Worker done")
 
 		for ping := range ch {
 			s.logger.Debug().Msg("receive: " + ping.IP.String())
-			for c := 1; c < timesToRetry+1; c++ {
-				s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s.", ping.Iface.Name, ping.IP))
-				MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
-				if err != nil {
-					if err != arping.ErrTimeout {
-						// Try resend
-						s.logger.Debug().Msg(fmt.Sprintf("Need to resend arp to %s. Try # %v of %v.", ping.IP, c, timesToRetry))
-						time.Sleep(arpNanoSecDelay * time.Nanosecond)
-						continue
-					}
-					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: timeout.", ping.Iface.Name, ping.IP))
-					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
-					s.pongs.Store(pong)
-					break
-				} else {
-					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", ping.Iface.Name, ping.IP))
-					pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
-					s.pongs.Store(pong)
-					break
-				}
-				//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
-			}
+			// for c := 1; c < timesToRetry+1; c++ {
+			// 	s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s.", ping.Iface.Name, ping.IP))
+			// 	MAC, duration, err := arping.PingOverIface(ping.IP, ping.Iface)
+			// 	if err != nil {
+			// 		if err != arping.ErrTimeout {
+			// 			// Try resend
+			// 			s.logger.Debug().Msg(fmt.Sprintf("Need to resend arp to %s. Try # %v of %v.", ping.IP, c, timesToRetry))
+			// 			time.Sleep(arpNanoSecDelay * time.Nanosecond)
+			// 			continue
+			// 		}
+			// 		s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: timeout.", ping.Iface.Name, ping.IP))
+			// 		pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
+			// 		s.pongs.Store(pong)
+			// 		break
+			// 	} else {
+			// 		s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", ping.Iface.Name, ping.IP))
+			// 		pong := &model.Pong{IpAddr: ping.IP, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
+			// 		s.pongs.Store(pong)
+			// 		break
+			// 	}
+			// 	//s.logger.Debug().Msg(fmt.Sprintf("worker: %v,\tiface: %s,\tip: %s,\tmac: %s,\ttime: %s", num, ping.Iface.Name, ping.IP, macAddr, duration))
+			//}
 		}
 	}(s.pingChan, 0)
 	//	}
