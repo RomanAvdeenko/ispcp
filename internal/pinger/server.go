@@ -186,14 +186,14 @@ func (s *Server) Do() {
 					// 	time.Sleep(arpNanoSecDelay * time.Nanosecond)
 					// 	continue
 					// }
-					//s.logger.Trace().Msg(iface.Name + ip.String() + " timeout.")
-					pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
-					s.pongs.Store(pong)
+					s.logger.Trace().Msg(iface.Name + ip.String() + " timeout.")
+					//pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
+					//s.pongs.Store(pong)
 					//break
 				} else {
 					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", iface.Name, ip))
-					pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
-					s.pongs.Store(pong)
+					//pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
+					//s.pongs.Store(pong)
 					//break
 				}
 			}
