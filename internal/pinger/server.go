@@ -177,7 +177,7 @@ func (s *Server) Do() {
 			}
 			for _, ip := range ips {
 				//	for c := 1; c < timesToRetry+1; c++ {
-				s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
+				s.logger.Debug().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
 				MAC, duration, err := arping.PingOverIface(ip, iface)
 				//MAC, duration := net.HardwareAddr{}, time.Duration(0)
 				s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v\t%v.", MAC, duration, err))
