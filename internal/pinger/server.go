@@ -52,7 +52,7 @@ func newServer(cfg *Config, store store.Store) *Server {
 	return &s
 }
 func init() {
-	//arping.SetTimeout(10 * time.Millisecond)
+	arping.SetTimeout(10 * time.Millisecond)
 	//arping.EnableVerboseLog()
 }
 
@@ -180,7 +180,7 @@ func (s *Server) Do() {
 				s.logger.Debug().Msg(fmt.Sprintf("Before: %v,\t%v.", iface, ip))
 				MAC, duration, err := arping.PingOverIface(ip, iface)
 				s.logger.Debug().Msg(fmt.Sprintf("After: %v,\t%v.", iface, ip))
-				//s.logger.Debug().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
+				s.logger.Debug().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
 				//MAC, duration := net.HardwareAddr{}, time.Duration(0)
 				s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v\t%v.", MAC, duration, err))
 				if err != nil {
