@@ -6,7 +6,6 @@ require (
 	github.com/RomanAvdeenko/utils v1.1.9
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.2.5
-	github.com/j-keck/arping v1.0.2
 	github.com/rs/zerolog v1.26.0
 	github.com/stretchr/testify v1.7.0
 )

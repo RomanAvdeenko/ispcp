@@ -3,7 +3,6 @@ package pinger
 import (
 	"database/sql"
 	"fmt"
-	"net"
 
 	"ispcp/internal/host"
 	"ispcp/internal/model"
@@ -15,7 +14,8 @@ import (
 
 	mynet "github.com/RomanAvdeenko/utils/net"
 
-	"github.com/j-keck/arping"
+	//"github.com/j-keck/arping"
+	"ispcp/internal/arping"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -178,8 +178,8 @@ func (s *Server) Do() {
 			for _, ip := range ips {
 				//	for c := 1; c < timesToRetry+1; c++ {
 				s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
-				//MAC, duration, err := arping.PingOverIface(ip, iface)
-				MAC, duration := net.HardwareAddr{}, time.Duration(0)
+				MAC, duration, err := arping.PingOverIface(ip, iface)
+				//MAC, duration := net.HardwareAddr{}, time.Duration(0)
 				s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v\t%v.", MAC, duration, err))
 				if err != nil {
 					//if err != arping.ErrTimeout {
