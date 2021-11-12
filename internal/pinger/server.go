@@ -52,7 +52,7 @@ func newServer(cfg *Config, store store.Store) *Server {
 	return &s
 }
 func init() {
-	arping.SetTimeout(10 * time.Millisecond)
+	//arping.SetTimeout(10 * time.Millisecond)
 	//arping.EnableVerboseLog()
 }
 
