@@ -154,10 +154,10 @@ func (s *Server) configureLogger() {
 
 // Adds work to ipl required host interfaces
 func (s *Server) Do() {
-	defer func() {
-		s.logger.Debug().Msg("Work  done")
-		s.run = false
-	}()
+	// defer func() {
+	// 	s.logger.Debug().Msg("Work  done")
+	// 	s.run = false
+	// }()
 
 	s.logger.Debug().Msg("Starting to add work.")
 	s.run = true
@@ -180,7 +180,7 @@ func (s *Server) Do() {
 				s.logger.Debug().Msg(fmt.Sprintf("Before: %v,\t%v.", iface, ip))
 				MAC, duration, err := arping.PingOverIface(ip, iface)
 				s.logger.Debug().Msg(fmt.Sprintf("After: %v,\t%v.", iface, ip))
-				s.logger.Debug().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
+				//s.logger.Debug().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
 				//MAC, duration := net.HardwareAddr{}, time.Duration(0)
 				s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v\t%v.", MAC, duration, err))
 				if err != nil {
@@ -204,4 +204,6 @@ func (s *Server) Do() {
 			}
 		}
 	}
+	s.logger.Debug().Msg("Work  done")
+	s.run = false
 }
