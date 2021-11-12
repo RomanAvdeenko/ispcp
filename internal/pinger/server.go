@@ -3,6 +3,7 @@ package pinger
 import (
 	"database/sql"
 	"fmt"
+	"net"
 
 	"ispcp/internal/host"
 	"ispcp/internal/model"
@@ -177,27 +178,28 @@ func (s *Server) Do() {
 			for _, ip := range ips {
 				//	for c := 1; c < timesToRetry+1; c++ {
 				s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
-				MAC, duration, err := arping.PingOverIface(ip, iface)
+				//MAC, duration, err := arping.PingOverIface(ip, iface)
+				MAC, duration := net.HardwareAddr{}, time.Duration(0)
 				s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v\t%v.", MAC, duration, err))
 				if err != nil {
-					// if err != arping.ErrTimeout {
-					// 	// Try resend
-					// 	s.logger.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToRetry))
-					// 	time.Sleep(arpNanoSecDelay * time.Nanosecond)
+					//if err != arping.ErrTimeout {
+					// Try resend
+					//s.logger.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToRetry))
+					//time.Sleep(arpNanoSecDelay * time.Nanosecond)
 					// 	continue
 					// }
 					s.logger.Trace().Msg(iface.Name + ip.String() + " timeout.")
-					//pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
-					//s.pongs.Store(pong)
+					pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
+					s.pongs.Store(pong)
 					//break
 				} else {
 					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", iface.Name, ip))
-					//pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
-					//s.pongs.Store(pong)
+					pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
+					s.pongs.Store(pong)
 					//break
 				}
+				//}
 			}
-			//}
 		}
 	}
 }

@@ -36,16 +36,16 @@ func (p *Pongs) Len() int {
 }
 
 func (p *Pongs) Store(val *Pong) {
-	p.Lock()
 	defer p.Unlock()
 
+	p.Lock()
 	p.pong = append(p.pong, *val)
 }
 
 func (p *Pongs) LoadAll() *[]Pong {
-	// p.RLock()
 	// defer p.RUnlock()
 
+	// p.RLock()
 	// res := make([]Pong, len(p.pong))
 	// copy(res, p.pong)
 	// return &p.pong
@@ -54,9 +54,9 @@ func (p *Pongs) LoadAll() *[]Pong {
 }
 
 func (p *Pongs) Clear() {
-	p.Lock()
 	defer p.Unlock()
 
+	p.Lock()
 	//p.pong = p.pong[:0]
 	p.pong = nil
 }
