@@ -75,7 +75,7 @@ var (
 
 	verboseLog = log.New(ioutil.Discard, "", 0)
 	timeout    = time.Duration(500 * time.Millisecond)
-	ArpDelay   = time.Duration(2 * time.Millisecond)
+	ArpDelay   = time.Duration(5 * time.Millisecond)
 )
 
 // Ping sends an arp ping to 'dstIP'
