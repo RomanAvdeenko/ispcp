@@ -10,13 +10,20 @@ import (
 	_ "net/http/pprof"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/xlab/closer"
 )
 
 var (
 	configFileName *string
 )
 
+func cleanup() {
+	pinger.Stop()
+}
+
 func init() {
+	closer.Bind(cleanup)
+
 	// Handle flags
 	configFileName = flag.String("c", "./configs/config.yaml", "path to config file")
 	flag.Parse()
@@ -62,5 +69,5 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	//log.Printf("config: %+v\n", config)
+	closer.Hold()
 }

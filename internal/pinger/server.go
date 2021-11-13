@@ -56,6 +56,43 @@ func init() {
 	//arping.EnableVerboseLog()
 }
 
+func Stop() {
+	fmt.Println("Terminate...")
+	db.Close()
+	f.Close()
+}
+
+func Start(cfg *Config) error {
+	defer Stop()
+
+	if err := selectStoreType(cfg, f, db); err != nil {
+		return err
+	}
+	s := newServer(cfg, st)
+
+	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
+	refreshTicker := time.NewTicker(refreshInterval)
+
+	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, store type: %s, logging level: %s", refreshInterval, s.conifg.StoreType, s.conifg.LoggingLevel))
+	// Start working instantly
+	go s.Do()
+	for range refreshTicker.C {
+		if !s.run {
+			s.logger.Info().Msg("Write to store")
+			err := s.store.Store(s.pongs)
+			if err != nil {
+				s.logger.Error().Msg("Store error: " + err.Error())
+				continue
+			}
+			s.pongs.Clear()
+			go s.Do()
+		} else {
+			s.logger.Warn().Msg("Can't start/ Previouswork isn't finished!")
+		}
+	}
+	return nil
+}
+
 func selectStoreType(cfg *Config, f *os.File, db *sql.DB) error {
 	var err error
 	if cfg.StoreType == "mysql" {
@@ -78,38 +115,6 @@ func selectStoreType(cfg *Config, f *os.File, db *sql.DB) error {
 			return err
 		}
 		st = file.New(f)
-	}
-	return nil
-}
-
-func Start(cfg *Config) error {
-	if err := selectStoreType(cfg, f, db); err != nil {
-		return err
-	}
-	defer db.Close()
-	defer f.Close()
-
-	s := newServer(cfg, st)
-
-	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
-	refreshTicker := time.NewTicker(refreshInterval)
-
-	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, store type: %s, logging level: %s", refreshInterval, s.conifg.StoreType, s.conifg.LoggingLevel))
-	// Start working instantly
-	go s.Do()
-	for range refreshTicker.C {
-		if !s.run {
-			s.logger.Info().Msg("Write to store")
-			err := s.store.Store(s.pongs)
-			if err != nil {
-				s.logger.Error().Msg("Store error: " + err.Error())
-				continue
-			}
-			s.pongs.Clear()
-			go s.Do()
-		} else {
-			s.logger.Warn().Msg("Can't start/ Previouswork isn't finished!")
-		}
 	}
 	return nil
 }
