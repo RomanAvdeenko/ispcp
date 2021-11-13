@@ -155,6 +155,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 
 				verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n",
 					response.SenderIP(), response.SenderMac())
+				time.Sleep(time.Microsecond)
 			}
 		}
 	}()
