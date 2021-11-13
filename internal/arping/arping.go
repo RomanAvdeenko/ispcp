@@ -137,7 +137,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 		if sendTime, err := sock.send(request); err != nil {
 			pingResultChan <- PingResult{nil, 0, err}
 		} else {
-			for {
+			for c := 0; c < 64; c++ {
 				// receive arp response
 				response, receiveTime, err := sock.receive()
 
@@ -148,15 +148,14 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 
 				if response.IsResponseOf(request) {
 					duration := receiveTime.Sub(sendTime)
-					verboseLog.Printf("process received arp: srcIP: '%s', srcMac: '%s'\n",
-						response.SenderIP(), response.SenderMac())
-					pingResultChan <- PingResult{response.SenderMac(), duration, err}
+					verboseLog.Printf("process received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
+					pingResultChan <- PingResult{response.SenderMac(), duration, nil}
 					return
 				}
 
-				verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n",
-					response.SenderIP(), response.SenderMac())
+				verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
 			}
+			return
 		}
 	}()
 
