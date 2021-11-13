@@ -77,18 +77,18 @@ func Start(cfg *Config) error {
 	// Start working instantly
 	go s.Do()
 	for range refreshTicker.C {
-		if !s.run {
-			s.logger.Info().Msg("Write to store")
-			err := s.store.Store(s.pongs)
-			if err != nil {
-				s.logger.Error().Msg("Store error: " + err.Error())
-				continue
-			}
-			s.pongs.Clear()
-			go s.Do()
-		} else {
-			s.logger.Warn().Msg("Can't start/ Previouswork isn't finished!")
+		//if !s.run {
+		s.logger.Info().Msg("Write to store")
+		err := s.store.Store(s.pongs)
+		if err != nil {
+			s.logger.Error().Msg("Store error: " + err.Error())
+			continue
 		}
+		s.pongs.Clear()
+		go s.Do()
+		//} else {
+		//	s.logger.Warn().Msg("Can't start/ Previouswork isn't finished!")
+		//}
 	}
 	return nil
 }
