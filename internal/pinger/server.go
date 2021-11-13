@@ -94,34 +94,23 @@ func Start(cfg *Config) error {
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
 	refreshTicker := time.NewTicker(refreshInterval)
 
-	//s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s, store type: %s", s.conifg.ThreadsNumber, refreshInterval, s.conifg.StoreType))
 	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, store type: %s, logging level: %s", refreshInterval, s.conifg.StoreType, s.conifg.LoggingLevel))
-
-	func() {
-		// Start working instantly
-		go s.Do()
-		for {
-			select {
-			case <-refreshTicker.C:
-				if !s.run {
-					s.logger.Info().Msg("Write to store")
-					err := s.store.Store(s.pongs)
-					if err != nil {
-						s.logger.Error().Msg("Store error: " + err.Error())
-						continue
-					}
-					s.pongs.Clear()
-					go s.Do()
-				} else {
-					s.logger.Warn().Msg("Can't start/ Previouswork isn't finished!")
-				}
+	// Start working instantly
+	go s.Do()
+	for range refreshTicker.C {
+		if !s.run {
+			s.logger.Info().Msg("Write to store")
+			err := s.store.Store(s.pongs)
+			if err != nil {
+				s.logger.Error().Msg("Store error: " + err.Error())
+				continue
 			}
+			s.pongs.Clear()
+			go s.Do()
+		} else {
+			s.logger.Warn().Msg("Can't start/ Previouswork isn't finished!")
 		}
-	}()
-
-	//quit := make(chan struct{})
-	//<-quit
-
+	}
 	return nil
 }
 
