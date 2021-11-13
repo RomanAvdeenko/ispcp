@@ -176,14 +176,17 @@ func (s *Server) Do() {
 				return
 			}
 			for _, ip := range ips {
-				// Resent if error
+				// Resend if error
 				for c := 1; c < timesToRetry+1; c++ {
 					MAC, duration, err := arping.PingOverIface(ip, iface)
 					s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
+
+					s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v\t%v.", MAC, duration, err))
 					if err != nil {
 						if err != arping.ErrTimeout {
-							// Try resend
+							// Try to resend
 							s.logger.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToRetry))
+							time.Sleep(arpNanoSecDelay * time.Nanosecond)
 							continue
 						}
 						s.logger.Trace().Msg(iface.Name + ip.String() + " timeout.")
@@ -197,6 +200,7 @@ func (s *Server) Do() {
 						break
 					}
 				}
+				time.Sleep(time.Microsecond)
 			}
 		}
 	}
