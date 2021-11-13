@@ -156,7 +156,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 					return
 				}
 				verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
-				time.Sleep(10 * time.Microsecond)
+				time.Sleep(30 * time.Microsecond)
 				runtime.Gosched()
 			}
 		}
@@ -166,7 +166,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 	case pingResult := <-pingResultChan:
 		return pingResult.mac, pingResult.duration, pingResult.err
 	case <-time.After(timeout):
-		sock.deinitialize()
+		//sock.deinitialize()
 		return nil, 0, ErrTimeout
 	}
 }
