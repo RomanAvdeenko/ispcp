@@ -2,12 +2,11 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"ispcp/internal/pinger"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -20,6 +19,10 @@ func init() {
 	// Handle flags
 	configFileName = flag.String("c", "./configs/config.yaml", "path to config file")
 	flag.Parse()
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 }
 
 //Read and parse config file
@@ -47,7 +50,6 @@ func readConfig(cfg *pinger.Config) error {
 }
 
 func main() {
-	fmt.Println("NG:", runtime.NumGoroutine())
 	config := pinger.NewConfig()
 
 	if err := readConfig(config); err != nil {
