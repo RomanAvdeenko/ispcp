@@ -186,7 +186,7 @@ func (s *Server) Do() {
 						if err != arping.ErrTimeout {
 							// Try to resend
 							s.logger.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToRetry))
-							time.Sleep(arpNanoSecDelay * time.Nanosecond)
+							time.Sleep(arping.ArpMicroSecDelay * time.Microsecond)
 							continue
 						}
 						s.logger.Trace().Msg(iface.Name + ip.String() + " timeout.")
@@ -200,7 +200,7 @@ func (s *Server) Do() {
 						break
 					}
 				}
-				time.Sleep(30 * time.Microsecond)
+				time.Sleep(arping.ArpMicroSecDelay * time.Microsecond)
 			}
 		}
 	}

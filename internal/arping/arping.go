@@ -73,8 +73,9 @@ var (
 	// ErrTimeout error
 	ErrTimeout = errors.New("timeout")
 
-	verboseLog = log.New(ioutil.Discard, "", 0)
-	timeout    = time.Duration(500 * time.Millisecond)
+	verboseLog       = log.New(ioutil.Discard, "", 0)
+	timeout          = time.Duration(500 * time.Millisecond)
+	ArpMicroSecDelay = time.Duration(50)
 )
 
 // Ping sends an arp ping to 'dstIP'
@@ -107,7 +108,7 @@ func PingOverIfaceByName(dstIP net.IP, ifaceName string) (net.HardwareAddr, time
 func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Duration, error) {
 	// !!!Have a troubles without it for heavy load
 	defer func() {
-		time.Sleep(30 * time.Microsecond)
+		time.Sleep(ArpMicroSecDelay * time.Microsecond)
 		runtime.GC()
 	}()
 
@@ -159,7 +160,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 					return
 				}
 				verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
-				time.Sleep(30 * time.Microsecond)
+				time.Sleep(ArpMicroSecDelay * time.Microsecond)
 				runtime.Gosched()
 			}
 		}
