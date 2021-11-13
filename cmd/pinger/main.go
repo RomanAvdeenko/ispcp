@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"ispcp/internal/pinger"
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
@@ -45,6 +47,7 @@ func readConfig(cfg *pinger.Config) error {
 }
 
 func main() {
+	fmt.Println("NG:", runtime.NumGoroutine())
 	config := pinger.NewConfig()
 
 	if err := readConfig(config); err != nil {

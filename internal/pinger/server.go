@@ -201,6 +201,7 @@ func (s *Server) Do() {
 					//break
 				}
 				//}
+				time.Sleep(time.Microsecond)
 			}
 		}
 	}

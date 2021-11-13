@@ -121,7 +121,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 	if err != nil {
 		return nil, 0, err
 	}
-	//defer sock.deinitialize()
+	defer sock.deinitialize()
 
 	type PingResult struct {
 		mac      net.HardwareAddr
@@ -129,7 +129,6 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 		err      error
 	}
 	pingResultChan := make(chan PingResult, 1)
-	t := time.NewTimer(timeout)
 
 	go func() {
 		// send arp request
@@ -137,7 +136,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 		if sendTime, err := sock.send(request); err != nil {
 			pingResultChan <- PingResult{nil, 0, err}
 		} else {
-			for c := 0; c < 64; c++ {
+			for {
 				// receive arp response
 				response, receiveTime, err := sock.receive()
 
@@ -148,33 +147,23 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 
 				if response.IsResponseOf(request) {
 					duration := receiveTime.Sub(sendTime)
-					verboseLog.Printf("process received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
-					pingResultChan <- PingResult{response.SenderMac(), duration, nil}
+					verboseLog.Printf("process received arp: srcIP: '%s', srcMac: '%s'\n",
+						response.SenderIP(), response.SenderMac())
+					pingResultChan <- PingResult{response.SenderMac(), duration, err}
 					return
 				}
 
-				verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
+				verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n",
+					response.SenderIP(), response.SenderMac())
 			}
-			pingResultChan <- PingResult{nil, 0, err}
-			return
 		}
 	}()
 
 	select {
 	case pingResult := <-pingResultChan:
-		if err := sock.deinitialize(); err != nil {
-			log.Println("!!! error sock.deinitialize() #1:", err)
-		}
-		if !t.Stop() {
-			<-t.C
-		}
 		return pingResult.mac, pingResult.duration, pingResult.err
-	case <-t.C:
-		//sock.deinitialize()
-		if err := sock.deinitialize(); err != nil {
-			log.Println("!!! error sock.deinitialize() #2:", err)
-		}
-
+	case <-time.After(timeout):
+		sock.deinitialize()
 		return nil, 0, ErrTimeout
 	}
 }
