@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	_ "net/http/pprof"
+
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
@@ -21,7 +23,7 @@ func init() {
 	flag.Parse()
 
 	go func() {
-		log.Println(http.ListenAndServe("193.111.156.166:6060", nil))
+		log.Println(http.ListenAndServe(":6060", nil))
 	}()
 }
 
