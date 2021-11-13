@@ -97,7 +97,7 @@ func Start(cfg *Config) error {
 	//s.logger.Info().Msg(fmt.Sprintf("Start pinger with %v threads, refresh interval: %s, store type: %s", s.conifg.ThreadsNumber, refreshInterval, s.conifg.StoreType))
 	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, store type: %s, logging level: %s", refreshInterval, s.conifg.StoreType, s.conifg.LoggingLevel))
 
-	go func() {
+	func() {
 		// Start working instantly
 		go s.Do()
 		for {
@@ -119,8 +119,8 @@ func Start(cfg *Config) error {
 		}
 	}()
 
-	quit := make(chan struct{})
-	<-quit
+	//quit := make(chan struct{})
+	//<-quit
 
 	return nil
 }
