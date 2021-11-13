@@ -154,10 +154,10 @@ func (s *Server) configureLogger() {
 
 // Adds work to ipl required host interfaces
 func (s *Server) Do() {
-	// defer func() {
-	// 	s.logger.Debug().Msg("Work  done")
-	// 	s.run = false
-	// }()
+	defer func() {
+		s.logger.Debug().Msg("Work  done")
+		s.run = false
+	}()
 
 	s.logger.Debug().Msg("Starting to add work.")
 	s.run = true
@@ -176,34 +176,28 @@ func (s *Server) Do() {
 				return
 			}
 			for _, ip := range ips {
-				//	for c := 1; c < timesToRetry+1; c++ {
-				//s.logger.Debug().Msg(fmt.Sprintf("Before: %v,\t%v.", iface, ip))
-				MAC, duration, err := arping.PingOverIface(ip, iface)
-				//s.logger.Debug().Msg(fmt.Sprintf("After: %v,\t%v.", iface, ip))
-				////s.logger.Debug().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
-				//MAC, duration := net.HardwareAddr{}, time.Duration(0)
-				s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v\t%v.", MAC, duration, err))
-				if err != nil {
-					//if err != arping.ErrTimeout {
-					// Try resend
-					//s.logger.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToRetry))
-					//time.Sleep(arpNanoSecDelay * time.Nanosecond)
-					// 	continue
-					// }
-					s.logger.Trace().Msg(iface.Name + ip.String() + " timeout.")
-					pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
-					s.pongs.Store(pong)
-					//break
-				} else {
-					s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", iface.Name, ip))
-					pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
-					s.pongs.Store(pong)
-					//break
+				// Resent if error
+				for c := 1; c < timesToRetry+1; c++ {
+					MAC, duration, err := arping.PingOverIface(ip, iface)
+					s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
+					if err != nil {
+						if err != arping.ErrTimeout {
+							// Try resend
+							s.logger.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToRetry))
+							continue
+						}
+						s.logger.Trace().Msg(iface.Name + ip.String() + " timeout.")
+						pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
+						s.pongs.Store(pong)
+						break
+					} else {
+						s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", iface.Name, ip))
+						pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
+						s.pongs.Store(pong)
+						break
+					}
 				}
-				//}
 			}
 		}
 	}
-	s.logger.Debug().Msg("Work  done")
-	s.run = false
 }

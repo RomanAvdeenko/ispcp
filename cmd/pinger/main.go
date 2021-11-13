@@ -4,7 +4,6 @@ import (
 	"flag"
 	"ispcp/internal/pinger"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 
@@ -22,9 +21,10 @@ func init() {
 	configFileName = flag.String("c", "./configs/config.yaml", "path to config file")
 	flag.Parse()
 
-	go func() {
-		log.Println(http.ListenAndServe(":6060", nil))
-	}()
+	//
+	// go func() {
+	// 	log.Println(http.ListenAndServe(":6060", nil))
+	// }()
 }
 
 //Read and parse config file
