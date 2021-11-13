@@ -106,7 +106,10 @@ func PingOverIfaceByName(dstIP net.IP, ifaceName string) (net.HardwareAddr, time
 // PingOverIface sends an arp ping over interface 'iface' to 'dstIP'
 func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Duration, error) {
 	// !!!Have a troubles without it for heavy load
-	defer runtime.GC()
+	defer func() {
+		time.Sleep(30 * time.Microsecond)
+		runtime.GC()
+	}()
 
 	if err := validateIP(dstIP); err != nil {
 		return nil, 0, err
