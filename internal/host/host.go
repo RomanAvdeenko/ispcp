@@ -67,6 +67,7 @@ func (h *Host) GetIfaceAddrs(iface net.Interface) (ipNets []string, err error) {
 	var res []string
 	addrs, err := iface.Addrs()
 	if err != nil {
+		h.logger.Error().Msg("GetIfaceAddrs()")
 		return
 	}
 	for _, addr := range addrs {
