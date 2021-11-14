@@ -30,6 +30,9 @@ pinger
 # go mod sum file
 go.sum
 
+# PIDs
+*.pid
+
 # Migrations
 #migrations/
 
