@@ -1,4 +1,8 @@
 #!/bin/bash
 
-cd ~/Go/ispcp
-/usr/bin/screen -LAdmS pinger /bin/bash -c './pinger; /bin/bash'
+CUR_DIR=`dirname $0`
+PRG='pinger'
+CMD="$CUR_DIR/$PRG"
+
+cd $CUR_DIR
+/usr/bin/screen -AdmS pinger /bin/bash -c "$CMD; /bin/bash"
