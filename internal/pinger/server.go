@@ -93,7 +93,7 @@ func Start(cfg *Config) error {
 	return nil
 }
 
-func selectStoreType(cfg *Config, f *os.File, db *sql.DB) error {
+func selectStoreType(cfg *Config, fi *os.File, db *sql.DB) error {
 	var err error
 	if cfg.StoreType == "mysql" {
 		// // Mysql store
@@ -114,7 +114,7 @@ func selectStoreType(cfg *Config, f *os.File, db *sql.DB) error {
 		if err != nil {
 			return err
 		}
-		st = file.New(f)
+		st = file.New(fi)
 	}
 	return nil
 }
