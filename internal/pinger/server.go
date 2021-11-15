@@ -68,7 +68,8 @@ func Stop() {
 func Start(cfg *Config) error {
 	defer Stop()
 
-	arping.SetTimeout(time.Millisecond * time.Duration(cfg.ResponseWaitTime))
+	responseWaitTime := time.Millisecond * time.Duration(cfg.ResponseWaitTime)
+	arping.SetTimeout(responseWaitTime)
 
 	if err := selectStoreType(cfg, f, db); err != nil {
 		return err
@@ -78,7 +79,8 @@ func Start(cfg *Config) error {
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
 	refreshTicker := time.NewTicker(refreshInterval)
 
-	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, store type: %s, logging level: %s", refreshInterval, s.conifg.StoreType, s.conifg.LoggingLevel))
+	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, response wait time: %s, store type: %s, logging level: %s",
+		refreshInterval, responseWaitTime, s.conifg.StoreType, s.conifg.LoggingLevel))
 	// Start working instantly
 	go s.Do()
 	for range refreshTicker.C {
