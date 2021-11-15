@@ -143,7 +143,6 @@ func (s *Server) configureLogger() {
 	default:
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
-
 }
 
 // Adds work to ipl required host interfaces
