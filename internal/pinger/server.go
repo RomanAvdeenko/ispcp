@@ -36,7 +36,7 @@ type Server struct {
 	host     *host.Host
 	pongs    *model.Pongs
 	location *time.Location
-	//run      bool
+	run      bool
 }
 
 func newServer(cfg *Config, store store.Store) *Server {
@@ -52,14 +52,18 @@ func newServer(cfg *Config, store store.Store) *Server {
 	return &s
 }
 func init() {
-	arping.SetTimeout(10 * time.Millisecond)
+	arping.SetTimeout(30 * time.Millisecond)
 	//arping.EnableVerboseLog()
 }
 
 func Stop() {
 	fmt.Println("Terminate...")
-	db.Close()
-	f.Close()
+	if db != nil {
+		db.Close()
+	}
+	if f != nil {
+		f.Close()
+	}
 }
 
 func Start(cfg *Config) error {
@@ -77,11 +81,11 @@ func Start(cfg *Config) error {
 	// Start working instantly
 	go s.Do()
 	for range refreshTicker.C {
-		//if !s.run {
-		go s.Do()
-		//} else {
-		//	s.logger.Warn().Msg("Can't start/ Previouswork isn't finished!")
-		//}
+		if !s.run {
+			go s.Do()
+		} else {
+			s.logger.Warn().Msg("Can't start, previouswork isn't finished!")
+		}
 	}
 	return nil
 }
@@ -143,11 +147,11 @@ func (s *Server) configureLogger() {
 func (s *Server) Do() {
 	defer func() {
 		s.pongs.Clear()
-		//s.run = false
+		s.run = false
 	}()
 
 	s.logger.Debug().Msg("Starting to add work.")
-	//s.run = true
+	s.run = true
 	//Let's walk through the interfaces
 	for _, iface := range s.host.ProcessedIfaces {
 		ifaceAddrs, err := s.host.GetIfaceAddrs(iface)

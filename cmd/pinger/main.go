@@ -51,6 +51,16 @@ func isLaunched() (bool, error) {
 }
 
 func init() {
+	// Check if a copy of the program is running
+	launched, err := isLaunched()
+	if err != nil {
+		fmt.Println("Error check PID file:", err)
+		os.Exit(1)
+	}
+	if launched {
+		fmt.Println("The program is already running, or delete the PID file.")
+		os.Exit(1)
+	}
 	// Handle flags
 	configFileName = flag.String("c", "./configs/config.yaml", "path to config file")
 	flag.Parse()
@@ -88,25 +98,16 @@ func readConfig(cfg *pinger.Config) error {
 }
 
 func main() {
-	launched, err := isLaunched()
-	if err != nil {
-		fmt.Println("Error check PID file:", err)
-		os.Exit(1)
-	}
-	if launched {
-		fmt.Println("The program is already running, or delete the PID file.")
-		os.Exit(1)
-	}
-
 	config := pinger.NewConfig()
 
 	if err := readConfig(config); err != nil {
+		cleanup()
 		log.Fatalln(err)
 	}
 
 	if err := pinger.Start(config); err != nil {
+		cleanup()
 		log.Fatalln(err)
 	}
-
 	closer.Hold()
 }

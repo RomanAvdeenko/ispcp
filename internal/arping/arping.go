@@ -106,10 +106,10 @@ func PingOverIfaceByName(dstIP net.IP, ifaceName string) (net.HardwareAddr, time
 
 // PingOverIface sends an arp ping over interface 'iface' to 'dstIP'
 func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Duration, error) {
-	// !!!Have a troubles without it for heavy load
+	// !!!Have a troubles without GC call for heavy load
 	defer func() {
 		time.Sleep(ArpDelay)
-		runtime.GC()
+		//runtime.GC()
 	}()
 
 	if err := validateIP(dstIP); err != nil {
@@ -137,40 +137,48 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 		err      error
 	}
 	pingResultChan := make(chan PingResult, 1)
+	cancelChan := make(chan struct{}, 1)
 
-	go func() {
+	go func(ch chan<- PingResult, cancelCh <-chan struct{}) {
 		// send arp request
 		verboseLog.Printf("arping '%s' over interface: '%s' with address: '%s'\n", dstIP, iface.Name, srcIP)
 		if sendTime, err := sock.send(request); err != nil {
-			pingResultChan <- PingResult{nil, 0, err}
+			ch <- PingResult{nil, 0, err}
 		} else {
 			for {
-				// receive arp response
-				response, receiveTime, err := sock.receive()
-
-				if err != nil {
-					pingResultChan <- PingResult{nil, 0, err}
+				select {
+				case <-cancelCh:
+					//verboseLog.Printf("Cancel goroutine because of timeout.")
 					return
-				}
+				default:
+					// receive arp response
+					response, receiveTime, err := sock.receive()
 
-				if response.IsResponseOf(request) {
-					duration := receiveTime.Sub(sendTime)
-					verboseLog.Printf("process received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
-					pingResultChan <- PingResult{response.SenderMac(), duration, err}
-					return
+					if err != nil {
+						ch <- PingResult{nil, 0, err}
+						return
+					}
+
+					if response.IsResponseOf(request) {
+						duration := receiveTime.Sub(sendTime)
+						verboseLog.Printf("process received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
+						ch <- PingResult{response.SenderMac(), duration, err}
+						return
+					}
+					verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
+					time.Sleep(ArpDelay)
+					runtime.Gosched()
 				}
-				verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
-				time.Sleep(ArpDelay)
-				runtime.Gosched()
 			}
 		}
-	}()
+	}(pingResultChan, cancelChan)
 
 	select {
 	case pingResult := <-pingResultChan:
 		return pingResult.mac, pingResult.duration, pingResult.err
 	case <-time.After(timeout):
 		//sock.deinitialize()
+		cancelChan <- struct{}{}
 		return nil, 0, ErrTimeout
 	}
 }
