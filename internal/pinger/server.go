@@ -52,7 +52,6 @@ func newServer(cfg *Config, store store.Store) *Server {
 	return &s
 }
 func init() {
-	arping.SetTimeout(30 * time.Millisecond)
 	//arping.EnableVerboseLog()
 }
 
@@ -68,6 +67,8 @@ func Stop() {
 
 func Start(cfg *Config) error {
 	defer Stop()
+
+	arping.SetTimeout(time.Millisecond * time.Duration(cfg.ResponseWaitTime))
 
 	if err := selectStoreType(cfg, f, db); err != nil {
 		return err

@@ -6,6 +6,7 @@ const (
 	// concurrentDefault    = 16
 	//jobChanLen           = 0
 	restartIntervalMin   = 10
+	responseMaitTimeMin  = 10
 	fileStoreNameDefault = "store.txt"
 )
 
@@ -13,11 +14,12 @@ type Config struct {
 	ExcludeIfaceNames []string `yaml:"exclude-ifaces"`
 	ExcludeNetIPs     []string `yaml:"exclude-networks"`
 	//	ThreadsNumber     int      `yaml:"threads"`
-	RestartInterval int    `yaml:"restart-interval"`
-	URI             string `yaml:"dsn"`
-	StoreType       string `yaml:"store"`
-	FileStoreName   string `yaml:"file-store-name"`
-	LoggingLevel    string `yaml:"log-level"`
+	RestartInterval  int    `yaml:"restart-interval"`
+	URI              string `yaml:"dsn"`
+	StoreType        string `yaml:"store"`
+	FileStoreName    string `yaml:"file-store-name"`
+	LoggingLevel     string `yaml:"log-level"`
+	ResponseWaitTime int    `yaml:"response-wait"`
 }
 
 func NewConfig() *Config {
@@ -31,7 +33,9 @@ func (cfg *Config) Correct() {
 	// case cfg.ThreadsNumber == 0:
 	// 	cfg.ThreadsNumber = concurrentDefault
 	// }
-
+	if cfg.ResponseWaitTime < responseMaitTimeMin {
+		cfg.ResponseWaitTime = responseMaitTimeMin
+	}
 	if cfg.RestartInterval < restartIntervalMin {
 		cfg.RestartInterval = restartIntervalMin
 	}
