@@ -66,7 +66,7 @@ func Stop() {
 }
 
 func Start(cfg *Config) error {
-	defer Stop()
+	//defer Stop()
 
 	responseWaitTime := time.Millisecond * time.Duration(cfg.ResponseWaitTime)
 	arping.SetTimeout(responseWaitTime)
@@ -99,12 +99,9 @@ func selectStoreType(cfg *Config, fi *os.File, db *sql.DB) error {
 		// // Mysql store
 		db, err = sql.Open("mysql", cfg.URI)
 		if err != nil {
-			fmt.Println("err: ", err)
 			return err
 		}
-
 		if err = db.Ping(); err != nil {
-			fmt.Println("err: ", err)
 			return err
 		}
 		st = mysql.New(db)
