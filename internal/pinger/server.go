@@ -110,7 +110,7 @@ func selectStoreType(cfg *Config, fi *os.File, db *sql.DB) error {
 		st = mysql.New(db)
 	} else {
 		// File store
-		f, err = os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		fi, err = os.OpenFile("./store.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			return err
 		}
