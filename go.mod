@@ -7,7 +7,6 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.2.5
 	github.com/rs/zerolog v1.26.0
-	github.com/stretchr/testify v1.7.0
 )
 
 require github.com/facebookgo/atomicfile v0.0.0-20151019160806-2de1f203e7d5 // indirect
@@ -18,7 +17,6 @@ require (
 	github.com/facebookgo/pidfile v0.0.0-20150612191647-f242e2999868
 	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/xlab/closer v0.0.0-20190328110542-03326addb7c2
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

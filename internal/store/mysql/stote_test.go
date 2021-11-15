@@ -1,12 +1,8 @@
 package mysql_test
 
 import (
-	"ispcp/internal/model"
-	"ispcp/internal/store/mysql"
 	"os"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 var databaseURL string
@@ -18,12 +14,12 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestAdd(t *testing.T) {
-	db, teardown := mysql.TestDB(t, databaseURL)
-	defer teardown("")
+// func TestAdd(t *testing.T) {
+// 	db, teardown := mysql.TestDB(t, databaseURL)
+// 	defer teardown("")
 
-	store := mysql.New(db)
+// 	store := mysql.New(db)
 
-	r := model.TestCheckHostRecord(t)
-	assert.NoError(t, store.Add(r))
-}
+// 	r := model.TestCheckHostRecord(t)
+// 	assert.NoError(t, store.Add(r))
+// }
