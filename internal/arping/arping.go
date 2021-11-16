@@ -177,6 +177,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 		// if !t.Stop() {
 		// 	<-t.C
 		// }
+
 		return pingResult.mac, pingResult.duration, pingResult.err
 	case <-time.After(timeout):
 		//case <-t.C:
