@@ -65,6 +65,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"runtime"
 	"time"
 )
 
@@ -105,6 +106,12 @@ func PingOverIfaceByName(dstIP net.IP, ifaceName string) (net.HardwareAddr, time
 
 // PingOverIface sends an arp ping over interface 'iface' to 'dstIP'
 func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Duration, error) {
+	// !!!Have a troubles without GC call for heavy load
+	defer func() {
+		time.Sleep(ArpDelay)
+		//runtime.GC()
+	}()
+
 	if err := validateIP(dstIP); err != nil {
 		return nil, 0, err
 	}
@@ -131,6 +138,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 	}
 	pingResultChan := make(chan PingResult, 1)
 	cancelChan := make(chan struct{}, 1)
+	//t := time.NewTimer(timeout)
 
 	go func(ch chan<- PingResult, cancelCh <-chan struct{}) {
 		// send arp request
@@ -158,7 +166,9 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 						return
 					}
 					verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
-					//---runtime.Gosched()
+
+					time.Sleep(ArpDelay)
+					runtime.Gosched()
 
 				}
 			}
@@ -167,11 +177,15 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 
 	select {
 	case pingResult := <-pingResultChan:
+		// if !t.Stop() {
+		// 	<-t.C
+		// }
+
 		return pingResult.mac, pingResult.duration, pingResult.err
 	case <-time.After(timeout):
-		// Cancel goroutine
+		//case <-t.C:
+		//sock.deinitialize()
 		cancelChan <- struct{}{}
-		// Then return
 		return nil, 0, ErrTimeout
 	}
 }
