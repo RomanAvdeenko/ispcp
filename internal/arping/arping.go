@@ -65,7 +65,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"runtime"
 	"time"
 )
 
@@ -107,10 +106,10 @@ func PingOverIfaceByName(dstIP net.IP, ifaceName string) (net.HardwareAddr, time
 // PingOverIface sends an arp ping over interface 'iface' to 'dstIP'
 func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Duration, error) {
 	// !!!Have a troubles without GC call for heavy load
-	defer func() {
-		time.Sleep(ArpDelay)
-		//runtime.GC()
-	}()
+	// defer func() {
+	// 	time.Sleep(ArpDelay)
+	// 	//runtime.GC()
+	// }()
 
 	if err := validateIP(dstIP); err != nil {
 		return nil, 0, err
@@ -138,7 +137,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 	}
 	pingResultChan := make(chan PingResult, 1)
 	cancelChan := make(chan struct{}, 1)
-	t := time.NewTimer(timeout)
+	//t := time.NewTimer(timeout)
 
 	go func(ch chan<- PingResult, cancelCh <-chan struct{}) {
 		// send arp request
@@ -159,7 +158,6 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 						ch <- PingResult{nil, 0, err}
 						return
 					}
-
 					if response.IsResponseOf(request) {
 						duration := receiveTime.Sub(sendTime)
 						verboseLog.Printf("process received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
@@ -167,8 +165,8 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 						return
 					}
 					verboseLog.Printf("ignore received arp: srcIP: '%s', srcMac: '%s'\n", response.SenderIP(), response.SenderMac())
-					time.Sleep(ArpDelay)
-					runtime.Gosched()
+					//time.Sleep(ArpDelay)
+					//---runtime.Gosched()
 				}
 			}
 		}
@@ -176,11 +174,12 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 
 	select {
 	case pingResult := <-pingResultChan:
-		if !t.Stop() {
-			<-t.C
-		}
+		// if !t.Stop() {
+		// 	<-t.C
+		// }
 		return pingResult.mac, pingResult.duration, pingResult.err
-	case <-t.C:
+	case <-time.After(timeout):
+		//case <-t.C:
 		//sock.deinitialize()
 		cancelChan <- struct{}{}
 		return nil, 0, ErrTimeout
