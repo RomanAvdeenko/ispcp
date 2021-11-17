@@ -1,5 +1,7 @@
 package pinger
 
+import "sync"
+
 const (
 	timesToRetry = 3
 	// concurrentMax        = 128
@@ -9,6 +11,8 @@ const (
 	responseMaitTimeMin  = 10
 	fileStoreNameDefault = "store.txt"
 )
+
+var configLock = new(sync.RWMutex)
 
 type Config struct {
 	ExcludeIfaceNames []string `yaml:"exclude-ifaces"`
@@ -49,3 +53,6 @@ func (cfg *Config) Correct() {
 		cfg.LoggingLevel = "INFO"
 	}
 }
+
+func (cfg *Config) Lock()   { configLock.Lock() }
+func (cfg *Config) Unlock() { configLock.Unlock() }

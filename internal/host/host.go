@@ -10,12 +10,13 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+const estimatedIfaceNumber = 4
+
 // Host implements unix host...
 type Host struct {
 	ProcessedIfaces   []net.Interface
 	excludeIfaceNames []string
 	excludeNetIPs     []string
-	logger            *zerolog.Logger
 }
 
 func NewHost() *Host {
@@ -34,17 +35,14 @@ func (h *Host) SetExcludeNetworkIPs(val []string) {
 	}
 }
 
-func (h *Host) SetLogger(l *zerolog.Logger) { h.logger = l }
-
 func (h *Host) Configure() {
-	// Set default logger if needed
-	if h.logger == nil {
-		h.logger = &zerolog.Logger{}
-		*h.logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Stamp})
-	}
-	// Walk to interfaces
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Stamp})
+	h.setProcessedIfaces()
+}
+
+func (h *Host) setProcessedIfaces() {
 	ifaces, _ := net.Interfaces()
-	processedInterfaces := []net.Interface{}
+	processedInterfaces := make([]net.Interface, 0, estimatedIfaceNumber)
 	for _, iface := range ifaces {
 		// skip down interface & check next intf
 		if iface.Flags&net.FlagUp == 0 {
@@ -64,10 +62,10 @@ func (h *Host) Configure() {
 }
 
 func (h *Host) GetIfaceAddrs(iface net.Interface) (ipNets []string, err error) {
-	var res []string
+	res := make([]string, 0, estimatedIfaceNumber*2)
 	addrs, err := iface.Addrs()
 	if err != nil {
-		h.logger.Error().Msg("GetIfaceAddrs()")
+		log.Error().Msg("GetIfaceAddrs()")
 		return
 	}
 	for _, addr := range addrs {

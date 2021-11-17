@@ -32,7 +32,6 @@ var (
 type Server struct {
 	conifg   *Config
 	store    store.Store
-	logger   *zerolog.Logger
 	host     *host.Host
 	pongs    *model.Pongs
 	location *time.Location
@@ -43,8 +42,6 @@ func newServer(cfg *Config, store store.Store) *Server {
 	s := Server{
 		conifg: cfg,
 		store:  store,
-		//logger: &zerolog.New(os.Stdout),
-		logger: &zerolog.Logger{},
 		host:   host.NewHost(),
 		pongs:  model.NewPongs(),
 	}
@@ -55,8 +52,7 @@ func init() {
 	//arping.EnableVerboseLog()
 }
 
-func Stop() {
-	fmt.Println("Terminate...")
+func Clean() {
 	if db != nil {
 		db.Close()
 	}
@@ -66,8 +62,6 @@ func Stop() {
 }
 
 func Start(cfg *Config) error {
-	//defer Stop()
-
 	responseWaitTime := time.Millisecond * time.Duration(cfg.ResponseWaitTime)
 	arping.SetTimeout(responseWaitTime)
 
@@ -75,11 +69,12 @@ func Start(cfg *Config) error {
 		return err
 	}
 	s := newServer(cfg, st)
+	s.location, _ = time.LoadLocation("Europe/Kiev")
 
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
 	refreshTicker := time.NewTicker(refreshInterval)
 
-	s.logger.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, response wait time: %s, store type: %s, logging level: %s",
+	log.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, response wait time: %s, store type: %s, logging level: %s",
 		refreshInterval, responseWaitTime, s.conifg.StoreType, s.conifg.LoggingLevel))
 	// Start working instantly
 	go s.Do()
@@ -87,7 +82,7 @@ func Start(cfg *Config) error {
 		if !s.run {
 			go s.Do()
 		} else {
-			s.logger.Warn().Msg("Can't start, previouswork isn't finished!")
+			log.Warn().Msg("Can't start, previouswork isn't finished!")
 		}
 	}
 	return nil
@@ -117,19 +112,17 @@ func selectStoreType(cfg *Config, fi *os.File, db *sql.DB) error {
 }
 
 func (s *Server) configure() error {
-	s.location, _ = time.LoadLocation("Europe/Kiev")
 	s.configureLogger()
 
 	s.host.SetExcludeIfaceNames(s.conifg.ExcludeIfaceNames)
 	s.host.SetExcludeNetworkIPs(s.conifg.ExcludeNetIPs)
-	s.host.SetLogger(s.logger)
 	s.host.Configure()
 
 	return nil
 }
 
 func (s *Server) configureLogger() {
-	*s.logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Stamp})
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Stamp})
 	switch s.conifg.LoggingLevel {
 	case "DEBUG":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
@@ -149,41 +142,45 @@ func (s *Server) Do() {
 		s.run = false
 	}()
 
-	s.logger.Debug().Msg("Starting to add work.")
+	log.Debug().Msg("Starting to add work.")
 	s.run = true
+	// Сonfiguration may change
+	//...
+	s.configure()
+
 	//Let's walk through the interfaces
 	for _, iface := range s.host.ProcessedIfaces {
 		ifaceAddrs, err := s.host.GetIfaceAddrs(iface)
 		if err != nil {
-			s.logger.Error().Msg("addWork(): " + err.Error())
+			log.Error().Msg("addWork(): " + err.Error())
 			continue
 		}
 		for _, addr := range ifaceAddrs {
-			s.logger.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
+			log.Info().Msg(fmt.Sprintf("Processed interface: %v, processed network: %v", iface.Name, addr))
 			ips, err := mynet.GetHostsIP(addr)
 			if err != nil {
-				s.logger.Error().Msg("mynet.GetHostsIP " + err.Error())
+				log.Error().Msg("mynet.GetHostsIP " + err.Error())
 				return
 			}
 			for _, ip := range ips {
 				// Resend if error
 				for c := 1; c < timesToRetry+1; c++ {
 					MAC, duration, err := arping.PingOverIface(ip, iface)
-					s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
+					log.Trace().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
 
-					s.logger.Trace().Msg(fmt.Sprintf("%v,\t%v\t%v.", MAC, duration, err))
+					log.Trace().Msg(fmt.Sprintf("%v,\t%v\t%v.", MAC, duration, err))
 					if err != nil {
 						if err != arping.ErrTimeout {
 							// Try to resend
-							s.logger.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToRetry))
+							log.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToRetry))
 							continue
 						}
-						s.logger.Trace().Msg(iface.Name + ip.String() + " timeout.")
+						log.Trace().Msg(iface.Name + ip.String() + " timeout.")
 						pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: false}
 						s.pongs.Store(pong)
 						break
 					} else {
-						s.logger.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", iface.Name, ip))
+						log.Trace().Msg(fmt.Sprintf("%s,\t%s: OK.", iface.Name, ip))
 						pong := &model.Pong{IpAddr: ip, MACAddr: MAC, Time: time.Now().In(s.location), Duration: duration, Alive: true}
 						s.pongs.Store(pong)
 						break
@@ -192,12 +189,12 @@ func (s *Server) Do() {
 			}
 		}
 	}
-	s.logger.Debug().Msg("Work  done.")
+	log.Debug().Msg("Work  done.")
 
-	s.logger.Info().Msg("Write to the store.")
+	log.Info().Msg("Writing to the store.")
 	err := s.store.Store(s.pongs)
 	if err != nil {
-		s.logger.Error().Msg("Store error: " + err.Error())
+		log.Error().Msg("Store error: " + err.Error())
 		return
 	}
 }

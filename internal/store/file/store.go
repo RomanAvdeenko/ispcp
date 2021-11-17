@@ -5,6 +5,9 @@ import (
 	"ispcp/internal/model"
 	"os"
 	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 type Store struct {
@@ -16,6 +19,7 @@ func New(file *os.File) *Store {
 }
 
 func (s *Store) Store(pongs *model.Pongs) error {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.Stamp})
 	ps := pongs.LoadAll()
 	_, err := s.file.WriteString("->: " + time.Now().Format(time.Stamp) + "\n")
 	if err != nil {
@@ -27,10 +31,6 @@ func (s *Store) Store(pongs *model.Pongs) error {
 			return err
 		}
 	}
-	_, err = s.file.WriteString(fmt.Sprintf("->Total:\t%v\n", len(*ps)))
-	if err != nil {
-		return err
-	}
-
+	log.Debug().Msg(fmt.Sprintf("Written to store %v lines", len(*ps)))
 	return nil
 }
