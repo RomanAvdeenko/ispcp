@@ -109,7 +109,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 	// !!!Have a troubles without GC call for heavy load
 	defer func() {
 		time.Sleep(ArpDelay)
-		runtime.GC()
+		//runtime.GC()
 	}()
 
 	if err := validateIP(dstIP); err != nil {
