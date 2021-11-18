@@ -113,11 +113,9 @@ func selectStoreType(cfg *Config, fi *os.File, db *sql.DB) error {
 
 func (s *Server) configure() error {
 	s.configureLogger()
-
 	s.host.SetExcludeIfaceNames(s.conifg.ExcludeIfaceNames)
 	s.host.SetExcludeNetworkIPs(s.conifg.ExcludeNetIPs)
 	s.host.Configure()
-
 	return nil
 }
 

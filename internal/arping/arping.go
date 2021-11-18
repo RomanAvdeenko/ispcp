@@ -109,7 +109,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 	// !!!Have a troubles without GC call for heavy load
 	defer func() {
 		time.Sleep(ArpDelay)
-		//runtime.GC()
+		runtime.GC()
 	}()
 
 	if err := validateIP(dstIP); err != nil {
@@ -138,7 +138,7 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 	}
 	pingResultChan := make(chan PingResult, 1)
 	cancelChan := make(chan struct{}, 1)
-	//t := time.NewTimer(timeout)
+	t := time.NewTimer(timeout)
 
 	go func(ch chan<- PingResult, cancelCh <-chan struct{}) {
 		// send arp request
@@ -175,14 +175,11 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 
 	select {
 	case pingResult := <-pingResultChan:
-		// if !t.Stop() {
-		// 	<-t.C
-		// }
-
+		if !t.Stop() {
+			<-t.C
+		}
 		return pingResult.mac, pingResult.duration, pingResult.err
-	case <-time.After(timeout):
-		//case <-t.C:
-		//sock.deinitialize()
+	case <-t.C:
 		cancelChan <- struct{}{}
 		return nil, 0, ErrTimeout
 	}

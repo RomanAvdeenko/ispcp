@@ -14,6 +14,7 @@ import (
 
 	"github.com/facebookgo/pidfile"
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/jinzhu/copier"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -36,7 +37,15 @@ func clean() {
 
 // Reload config
 func reloadConfig() {
-	LoadConfig(false)
+	tmp := pinger.NewConfig()
+	if err := loadConfig(tmp); err != nil {
+		log.Error().Msg("can't load config: " + err.Error())
+		return
+	}
+	config.Lock()
+	defer config.Unlock()
+
+	copier.Copy(config, tmp)
 }
 
 // Check the launch of one instance of the program
@@ -75,7 +84,7 @@ func init() {
 	// Handle flags
 	configFileName = flag.String("c", "./configs/config.yaml", "path to config file")
 	flag.Parse()
-	//
+	// Handle syscalls
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
@@ -94,7 +103,13 @@ func init() {
 		}
 	}()
 	//
-	LoadConfig(true)
+	err = loadConfig(config)
+	if err != nil {
+		log.Error().Msg("can't load config: " + err.Error())
+		clean()
+		os.Exit(1)
+	}
+
 	// pprof instance
 	// go func() {
 	// 	log.Println(http.ListenAndServe(":6060", nil))
@@ -124,17 +139,6 @@ func loadConfig(cfg *pinger.Config) error {
 	}
 	cfg.Correct()
 	return nil
-}
-
-func LoadConfig(exitOnError bool) {
-	err := loadConfig(config)
-	if err != nil {
-		clean()
-		log.Error().Msg("can't load config: " + err.Error())
-		if exitOnError {
-			os.Exit(1)
-		}
-	}
 }
 
 func main() {
