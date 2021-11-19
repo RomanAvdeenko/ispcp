@@ -3,6 +3,7 @@ package pinger
 import (
 	"database/sql"
 	"fmt"
+	"syscall"
 
 	"ispcp/internal/host"
 	"ispcp/internal/model"
@@ -35,7 +36,7 @@ type Server struct {
 	host     *host.Host
 	pongs    *model.Pongs
 	location *time.Location
-	run      bool
+	run      int // 0 - stop, over - number of start attempts
 }
 
 func newServer(cfg *Config, store store.Store) *Server {
@@ -79,10 +80,15 @@ func Start(cfg *Config) error {
 	// Start working instantly
 	go s.Do()
 	for range refreshTicker.C {
-		if !s.run {
+		if s.run == 0 {
 			go s.Do()
 		} else {
-			log.Warn().Msg("Can't start, previouswork isn't finished!")
+			if s.run < timesToMainLoopRetry {
+				s.run++
+				log.Warn().Msg("Can't start, previouswork isn't finished!")
+			} else {
+				syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+			}
 		}
 	}
 	return nil
@@ -137,11 +143,11 @@ func (s *Server) configureLogger() {
 func (s *Server) Do() {
 	defer func() {
 		s.pongs.Clear()
-		s.run = false
+		s.run = 0
 	}()
 
 	log.Debug().Msg("Starting to add work.")
-	s.run = true
+	s.run = 1
 	// Сonfiguration may change
 	//...
 	s.configure()
@@ -162,7 +168,7 @@ func (s *Server) Do() {
 			}
 			for _, ip := range ips {
 				// Resend if error
-				for c := 1; c < timesToRetry+1; c++ {
+				for c := 1; c < timesToArpIPRetry+1; c++ {
 					MAC, duration, err := arping.PingOverIface(ip, iface)
 					log.Trace().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
 
@@ -170,7 +176,7 @@ func (s *Server) Do() {
 					if err != nil {
 						if err != arping.ErrTimeout {
 							// Try to resend
-							log.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToRetry))
+							log.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToArpIPRetry))
 							continue
 						}
 						log.Trace().Msg(iface.Name + ip.String() + " timeout.")

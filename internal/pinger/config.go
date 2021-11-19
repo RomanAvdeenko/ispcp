@@ -3,7 +3,8 @@ package pinger
 import "sync"
 
 const (
-	timesToRetry = 3
+	timesToMainLoopRetry = 3
+	timesToArpIPRetry    = 3
 	// concurrentMax        = 128
 	// concurrentDefault    = 16
 	//jobChanLen           = 0
