@@ -31,6 +31,6 @@ func (s *Store) Store(pongs *model.Pongs) error {
 			return err
 		}
 	}
-	log.Info().Msg(fmt.Sprintf("Written to store %v recordss", len(*ps)))
+	log.Info().Msg(fmt.Sprintf("Written to store %v records", len(*ps)))
 	return nil
 }
