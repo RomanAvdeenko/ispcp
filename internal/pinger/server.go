@@ -63,19 +63,25 @@ func Clean() {
 }
 
 func Start(cfg *Config) error {
+	var err error
 	responseWaitTime := time.Millisecond * time.Duration(cfg.ResponseWaitTime)
 	arping.SetTimeout(responseWaitTime)
 
 	if err := selectStoreType(cfg, f, db); err != nil {
 		return err
 	}
+
 	s := newServer(cfg, st)
-	s.location, _ = time.LoadLocation("Europe/Kiev")
+	s.location, err = time.LoadLocation(cfg.Location)
+	if err != nil {
+		log.Error().Msg("Couldn't set locale from config. Installed " + locationDefault)
+		s.location, _ = time.LoadLocation(locationDefault)
+	}
 
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
 	refreshTicker := time.NewTicker(refreshInterval)
 
-	log.Info().Msg(fmt.Sprintf("Start pinger with refresh interval: %s, response wait time: %s, store type: %s, logging level: %s",
+	log.Info().Msg(fmt.Sprintf("-->Start pinger with refresh interval: %s, response wait time: %s, store type: %s, logging level: %s",
 		refreshInterval, responseWaitTime, s.conifg.StoreType, s.conifg.LoggingLevel))
 	// Start working instantly
 	go s.Do()
@@ -146,7 +152,7 @@ func (s *Server) Do() {
 		s.run = 0
 	}()
 
-	log.Debug().Msg("Starting to add work.")
+	log.Debug().Msg("->Starting to add work.")
 	s.run = 1
 	// Сonfiguration may change
 	//...
@@ -193,12 +199,11 @@ func (s *Server) Do() {
 			}
 		}
 	}
-	log.Debug().Msg("Work  done.")
-
 	log.Info().Msg("Writing to the store.")
 	err := s.store.Store(s.pongs)
 	if err != nil {
 		log.Error().Msg("Store error: " + err.Error())
 		return
 	}
+	log.Debug().Msg("->Work  done.")
 }

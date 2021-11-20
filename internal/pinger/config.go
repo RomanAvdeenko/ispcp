@@ -11,6 +11,7 @@ const (
 	restartIntervalMin   = 10
 	responseMaitTimeMin  = 10
 	fileStoreNameDefault = "store.txt"
+	locationDefault      = "Europe/Kiev"
 )
 
 var configLock = new(sync.RWMutex)
@@ -25,6 +26,7 @@ type Config struct {
 	FileStoreName    string `yaml:"file-store-name"`
 	LoggingLevel     string `yaml:"log-level"`
 	ResponseWaitTime int    `yaml:"response-wait"`
+	Location         string `yaml:"location"`
 }
 
 func NewConfig() *Config {
@@ -52,6 +54,9 @@ func (cfg *Config) Correct() {
 	}
 	if cfg.LoggingLevel == "" {
 		cfg.LoggingLevel = "INFO"
+	}
+	if cfg.Location == "" {
+		cfg.Location = locationDefault
 	}
 }
 

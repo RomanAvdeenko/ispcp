@@ -3,8 +3,10 @@ exclude-ifaces:
   - bond*
   - wg*
 exclude-networks: [10.3.*]
-threads: 8
-restart-interval: 180
-dsn: "ispcsroute:pass@tcp(10.2.1.20)/billing?parseTime=True&loc=Europe%2FKiev&charset=utf8"
+restart-interval: 20
+response-wait: 10
+dsn: "ispcsroute:password@tcp(10.2.1.20)/billing-dev?parseTime=True&loc=Europe%2FKiev&charset=utf8&interpolateParams=true"
 file-store-name: "store.txt"
+log-level: "DEBUG"
 store: "mysql"
+location: "Europe/Kiev"

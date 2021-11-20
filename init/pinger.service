@@ -1,17 +1,18 @@
+# systemd
 [Unit]
 Description=Arpinging IP from host networks
 After=network.target
 
 [Service]
 Type=simple 
-PIDFile=/home/rav/Programing/Go/ispcp/pinger.pid
-WorkingDirectory=/home/rav/Programing/Go/ispcp/
+PIDFile=/usr/local/ispcs/arp-alive/pinger.pid
+WorkingDirectory=/usr/local/ispcs/arp-alive/
 User=rav
 Group=rav
-ExecStart=/home/rav/Programing/Go/ispcp/pinger
+ExecStart=/usr/local/ispcs/arp-alive/pinger
 
-#ExecStop=/home/rav/Programing/Go/ispcp/pinger
-#ExecReload=/home/rav/Programing/Go/ispcp/pinger
+#ExecStop=/usr/local/ispcs/arp-alive/pinger
+#ExecReload=/usr/local/ispcs/arp-alive/pinger
 
 TimeoutSec=10
 Restart=always
