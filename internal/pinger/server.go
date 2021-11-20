@@ -81,7 +81,7 @@ func Start(cfg *Config) error {
 	refreshInterval := time.Duration(s.conifg.RestartInterval) * time.Second
 	refreshTicker := time.NewTicker(refreshInterval)
 
-	log.Info().Msg(fmt.Sprintf("-->Start pinger with refresh interval: %s, response wait time: %s, store type: %s, logging level: %s",
+	log.Info().Msg(fmt.Sprintf("=>Start pinger with refresh interval: %s, response wait time: %s, store type: %s, logging level: %s",
 		refreshInterval, responseWaitTime, s.conifg.StoreType, s.conifg.LoggingLevel))
 	// Start working instantly
 	go s.Do()
