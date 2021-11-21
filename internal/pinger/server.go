@@ -89,7 +89,7 @@ func Start(cfg *Config) error {
 		if s.run == 0 {
 			go s.Do()
 		} else {
-			if s.run < timesToMainLoopRetry {
+			if s.run < mainLoopFails {
 				s.run++
 				log.Warn().Msg("Can't start, previouswork isn't finished!")
 			} else {
@@ -174,7 +174,7 @@ func (s *Server) Do() {
 			}
 			for _, ip := range ips {
 				// Resend if error
-				for c := 1; c < timesToArpIPRetry+1; c++ {
+				for c := 1; c < arpIPFails+1; c++ {
 					MAC, duration, err := arping.PingOverIface(ip, iface)
 					log.Trace().Msg(fmt.Sprintf("%v,\t%v.", iface, ip))
 
@@ -182,7 +182,7 @@ func (s *Server) Do() {
 					if err != nil {
 						if err != arping.ErrTimeout {
 							// Try to resend
-							log.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, timesToArpIPRetry))
+							log.Debug().Msg(fmt.Sprintf("Resend arp to %s, %v of %v.", ip, c, arpIPFails))
 							continue
 						}
 						log.Trace().Msg(iface.Name + ip.String() + " timeout.")
